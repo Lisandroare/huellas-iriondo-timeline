@@ -5,186 +5,271 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cronología Histórica Interactiva</title>
     
-    <!-- Fuentes modernas (Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Tipografía profesional de Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Iconos de FontAwesome -->
+    <!-- Librería de Iconos FontAwesome (Vectoriales) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Estilos de Vis-Timeline -->
+    <!-- Librería Vis-Timeline -->
     <link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
     
     <style>
-        /* ============================
-           Estética y Diseño Base
-           ============================ */
+        :root {
+            --bg-canvas: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
-            padding: 20px;
-            background-color: #f8f9fa;
-            color: #2c3e50;
+            padding: 24px;
+            background-color: var(--bg-canvas);
+            color: var(--text-main);
         }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto 20px auto;
+        }
+
         h1 {
-            text-align: center;
-            color: #1a252f;
-            margin-bottom: 25px;
+            font-size: 24px;
             font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 16px 0;
         }
-        
-        /* Contenedor de la línea de tiempo */
+
+        /* ============================
+           Panel de Filtros (Categorías)
+           ============================ */
+        .controls-panel {
+            background: var(--card-bg);
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .filter-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-right: 8px;
+        }
+
+        .filter-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1.5px solid var(--border-color);
+            background-color: #ffffff;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .filter-btn:hover {
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+
+        .filter-btn.active {
+            background-color: var(--cat-color, #2563eb);
+            border-color: var(--cat-color, #2563eb);
+            color: #ffffff;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+        }
+
+        .filter-btn-all {
+            border-color: #94a3b8;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        .filter-btn-all.active {
+            background-color: #334155;
+            border-color: #334155;
+            color: #ffffff;
+        }
+
+        /* ============================
+           Línea de Tiempo y Estilos Eje
+           ============================ */
         #visualization {
             width: 100%;
-            height: 85vh;
-            border: 1px solid #e0e6ed;
+            height: 75vh;
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            background: #ffffff;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+            background: var(--card-bg);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             overflow: hidden;
         }
 
-        /* Eje de años y panel izquierdo */
-        .vis-time-axis .vis-text {
-            font-weight: 600;
-            color: #34495e;
-            font-size: 14px;
-        }
-        
+        /* Bloqueo estricto de escala vertical (Eje Localidades B) */
         .vis-labelset .vis-label {
-            /* Fija un tamaño base para que todas las localidades se vean uniformes */
+            height: 48px !important;
+            line-height: 48px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            border-bottom: 1px solid #f1f5f9;
+            box-sizing: border-box;
+            padding: 0 16px !important;
             display: flex;
             align-items: center;
-            padding: 0 15px !important;
-            font-weight: 600;
-            font-size: 14px;
-            color: #2c3e50;
-            border-bottom: 1px solid #f0f0f0;
-            min-height: 50px;
+        }
+        .vis-group {
+            height: 48px !important;
+            border-bottom: 1px solid #f8fafc;
         }
 
-        /* Estilos personalizados para los puntos/barras de Vis-Timeline */
+        /* Estilo Eje Horizontal A (Años) */
+        .vis-time-axis .vis-text {
+            font-weight: 600;
+            color: #475569;
+            font-size: 13px;
+        }
+
+        /* Íconos y Puntos/Barras */
         .vis-item {
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            font-size: 14px;
+            border-radius: 20px;
             cursor: pointer;
             transition: transform 0.15s ease, box-shadow 0.15s ease;
             border-width: 2px !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: white; 
+            background-color: #ffffff;
         }
         .vis-item:hover {
-            transform: scale(1.05) translateY(-2px);
-            box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+            transform: scale(1.1) translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
             z-index: 999 !important;
         }
         .vis-item-content {
-            padding: 4px 8px;
-            font-size: 16px;
+            padding: 3px 8px;
+            font-size: 14px;
+        }
+        .vis-item.vis-range {
+            border-radius: 6px;
+            opacity: 0.9;
+        }
+        .vis-item.vis-range .vis-item-content {
+            color: #ffffff !important;
         }
 
-        /* Lógica para diferenciar Puntos vs Rangos temporalmente */
-        .vis-item.vis-point { background-color: white !important; }
-        .vis-item.vis-range { opacity: 0.9; }
-        .vis-item.vis-range .vis-item-content { color: white !important; }
-
         /* ============================
-           Pop-up (Tooltip Interactivo)
+           Pop-up (Tooltip)
            ============================ */
         #timeline-tooltip {
             position: absolute;
             display: none;
             width: 320px;
             background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.2);
-            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+            padding: 18px;
             z-index: 1000;
-            border: 1px solid #eaeaea;
-            font-size: 14px;
+            border: 1px solid var(--border-color);
+            font-size: 13px;
             pointer-events: auto;
         }
         .tt-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
+            gap: 10px;
+            margin-bottom: 10px;
             font-weight: 600;
-            color: #2c3e50;
-            border-bottom: 1px solid #f0f0f0;
-            padding-bottom: 10px;
+            color: var(--text-main);
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 8px;
         }
         .tt-first-sentence {
-            margin: 0 0 15px 0;
-            line-height: 1.6;
-            color: #444;
+            margin: 0 0 12px 0;
+            line-height: 1.5;
+            color: #334155;
         }
         .btn-more {
-            background-color: #34495e;
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 8px 12px;
             border-radius: 6px;
             cursor: pointer;
             font-family: inherit;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            transition: background 0.2s;
+            transition: opacity 0.2s;
             width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         .btn-more:hover {
-            background-color: #2c3e50;
+            opacity: 0.9;
         }
         .tt-full-content {
             display: none;
-            margin-top: 15px;
-            border-top: 1px dashed #dcdcdc;
-            padding-top: 15px;
-            animation: fadeIn 0.3s ease;
+            margin-top: 12px;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 12px;
         }
         .tt-full-text {
-            margin: 0 0 15px 0;
-            line-height: 1.6;
-            color: #555;
-            max-height: 200px;
+            margin: 0 0 12px 0;
+            line-height: 1.5;
+            color: #475569;
+            max-height: 180px;
             overflow-y: auto;
-            padding-right: 5px;
+            padding-right: 4px;
         }
         .tt-meta {
-            font-size: 12px;
-            color: #7f8c8d;
-            background: #f8f9fa;
-            padding: 10px;
+            font-size: 11px;
+            color: #64748b;
+            background: #f8fafc;
+            padding: 8px 10px;
             border-radius: 6px;
-            line-height: 1.6;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
+            line-height: 1.5;
         }
 
         #loader {
             text-align: center;
             padding: 60px;
-            font-size: 18px;
-            color: #666;
+            font-size: 16px;
+            color: var(--text-muted);
         }
     </style>
 </head>
 <body>
 
-    <h1>Cronología Histórica</h1>
+    <div class="header-container">
+        <h1>Cronología Histórica Interactiva</h1>
+        
+        <!-- Panel de Filtros por Categoría -->
+        <div class="controls-panel" id="controls-panel">
+            <span class="filter-title"><i class="fas fa-filter"></i> Categorías:</span>
+            <button class="filter-btn filter-btn-all active" id="btn-toggle-all">
+                <i class="fas fa-layer-group"></i> Todas
+            </button>
+            <div id="category-filters-container" style="display: contents;"></div>
+        </div>
+    </div>
+
     <div id="loader">Cargando datos desde CSV... <i class="fas fa-spinner fa-spin"></i></div>
     <div id="visualization" style="display:none;"></div>
 
-    <!-- Contenedor del Pop-up -->
+    <!-- Pop-up Interactivo -->
     <div id="timeline-tooltip">
         <div class="tt-header">
             <i id="tt-icon" class="fas fa-circle"></i>
@@ -202,47 +287,48 @@
         </div>
     </div>
 
-    <!-- Librerías -->
+    <!-- Carga de Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
 
     <script>
         const fileUrl = "CRONOLOGIAS FINAL.csv";
 
-        // Mapeo estricto de Categorías (Columna D) a un Color y un Icono
-        function getCategoryStyle(categoria) {
-            const cat = (categoria || "").toLowerCase();
+        // Mapeador gráfico para categorías
+        function getCategoryInfo(rawCat) {
+            const cat = (rawCat || "").toLowerCase();
             
             if (cat.includes("transporte") || cat.includes("comunicacion")) {
-                return { color: "#3498db", icon: "fas fa-train", title: "Transporte y Comunicaciones" }; // Azul
+                return { raw: rawCat, label: "Transporte y Comunicaciones", color: "#2563eb", icon: "fas fa-bus" };
             }
             if (cat.includes("energía") || cat.includes("energia")) {
-                return { color: "#f1c40f", icon: "fas fa-bolt", title: "Energía" }; // Amarillo
+                return { raw: rawCat, label: "Energía", color: "#d97706", icon: "fas fa-bolt" };
             }
             if (cat.includes("infraestructura") || cat.includes("institucion")) {
-                return { color: "#9b59b6", icon: "fas fa-building", title: "Infraestructura e Instituciones" }; // Violeta
+                return { raw: rawCat, label: "Infraestructura e Instituciones", color: "#7c3aed", icon: "fas fa-building" };
             }
             if (cat.includes("trabajo")) {
-                return { color: "#e67e22", icon: "fas fa-hammer", title: "Trabajo" }; // Naranja
+                return { raw: rawCat, label: "Trabajo", color: "#059669", icon: "fas fa-hammer" };
             }
-            if (cat.includes("identidad") || cat.includes("celebración")) {
-                return { color: "#e74c3c", icon: "fas fa-star", title: "Identidad y Celebración" }; // Rojo
+            if (cat.includes("identidad") || cat.includes("celebración") || cat.includes("celebracion")) {
+                return { raw: rawCat, label: "Identidad y Celebración", color: "#dc2626", icon: "fas fa-star" };
             }
-            
-            // Default por si hay celdas vacías
-            return { color: "#95a5a6", icon: "fas fa-calendar-check", title: "Histórico" }; // Gris
+            return { raw: rawCat, label: rawCat || "General", color: "#64748b", icon: "fas fa-bookmark" };
         }
 
-        // Función para extraer solo la primera oración del texto
         function getFirstSentence(text) {
             if (!text) return "";
             let match = text.match(/(.*?[.!?])(?:\s|$)/);
             return match ? match[1] : text;
         }
 
+        let timeline, itemsDataSet, itemsView;
+        let activeCategories = new Set();
+        let categoryMap = new Map();
+
         fetch(fileUrl)
             .then(response => {
-                if (!response.ok) throw new Error("No se pudo cargar el archivo");
+                if (!response.ok) throw new Error("No se encontró el archivo CSV");
                 return response.arrayBuffer();
             })
             .then(buffer => {
@@ -260,11 +346,8 @@
                 });
             })
             .catch(err => {
-                document.getElementById('loader').innerHTML = `<strong>Error:</strong> ${err.message}.`;
+                document.getElementById('loader').innerHTML = `<strong>Error:</strong> ${err.message}`;
             });
-
-        let timeline;
-        let itemsDataSet;
 
         function renderTimeline(data) {
             let groups = [];
@@ -281,21 +364,20 @@
 
                 if (!year || !loc) return;
 
-                // Panel Izquierdo (Eje Y: Localidades uniformes)
+                // Registro de Localidades (Columna B)
                 if (!localidades.has(loc)) {
                     localidades.add(loc);
-                    groups.push({
-                        id: loc,
-                        content: loc
-                    });
+                    groups.push({ id: loc, content: loc });
                 }
 
-                // Determinamos estilos basados en la Categoría (Columna D)
-                let styleData = getCategoryStyle(cat);
-                
+                // Categorías (Columna D)
+                let catInfo = getCategoryInfo(cat);
+                if (!categoryMap.has(catInfo.raw)) {
+                    categoryMap.set(catInfo.raw, catInfo);
+                    activeCategories.add(catInfo.raw); // Activas por defecto
+                }
+
                 let start, end = null, type = 'box';
-                
-                // Determinamos si es Rango o Punto
                 if (year.includes('-')) {
                     let parts = year.split('-');
                     start = parts[0].trim() + '-01-01';
@@ -306,10 +388,9 @@
                     type = 'point'; 
                 }
 
-                // Si es un periodo/rango, el fondo es de color. Si es un punto, el fondo es blanco y el borde es de color.
                 let inlineStyle = type === 'range' 
-                    ? `background-color: ${styleData.color}; border-color: ${styleData.color};` 
-                    : `border-color: ${styleData.color}; color: ${styleData.color};`;
+                    ? `background-color: ${catInfo.color}; border-color: ${catInfo.color};` 
+                    : `border-color: ${catInfo.color}; color: ${catInfo.color};`;
 
                 items.push({
                     id: index,
@@ -317,54 +398,118 @@
                     start: start,
                     end: end,
                     type: type,
-                    content: `<div class="vis-item-content"><i class="${styleData.icon}"></i></div>`,
+                    content: `<div class="vis-item-content"><i class="${catInfo.icon}"></i></div>`,
                     style: inlineStyle,
                     customData: {
+                        rawCategory: catInfo.raw,
                         firstSentence: getFirstSentence(desc),
                         fullText: desc,
-                        categoryTitle: styleData.title,
-                        categoryColor: styleData.color,
-                        icon: styleData.icon,
+                        categoryTitle: catInfo.label,
+                        categoryColor: catInfo.color,
+                        icon: catInfo.icon,
                         source: fuente,
                         page: pag
                     }
                 });
             });
 
+            // Datasets & DataView para filtrado en tiempo real
             itemsDataSet = new vis.DataSet(items);
             let groupsDataSet = new vis.DataSet(groups);
 
+            itemsView = new vis.DataView(itemsDataSet, {
+                filter: function (item) {
+                    return activeCategories.has(item.customData.rawCategory);
+                }
+            });
+
+            // Construir Botones de Filtro
+            buildFilterButtons();
+
             let container = document.getElementById('visualization');
             
-            // CONFIGURACIONES DE ZOOM Y LÍMITES SOLICITADOS
+            // OPCIONES DE NAVEGACIÓN Y ZOOM
             let options = {
-                zoomable: true,
-                moveable: true,
-                orientation: 'top', 
+                zoomable: true,          // Zoom activado
+                verticalScroll: true,    // Scroll vertical suave para localidades si superan el marco
+                orientation: 'top',      // Años fijados horizontalmente arriba
                 stack: true,
                 
-                // Límites temporales: No se podrá navegar más allá de estas fechas
+                // Límites temporales estrictos
                 min: new Date(1770, 0, 1),
                 max: new Date(2027, 11, 31),
                 
-                // Límite de Zoom Hacia adentro: 1 Año (Evita que la "Fila A" muestre meses o días)
+                // Límite Zoom In (Escala mínima anual para que la Fila A no muestre meses/días)
                 zoomMin: 1000 * 60 * 60 * 24 * 365,
                 
-                // Fuerza a que la etiqueta temporal muestre únicamente Años
                 format: {
                     minorLabels: { millisecond:'YYYY', second:'YYYY', minute:'YYYY', hour:'YYYY', weekday:'YYYY', day:'YYYY', month:'YYYY', year:'YYYY' }
                 },
-
-                margin: { item: 15, axis: 20 },
-                tooltip: { followMouse: false, overflowMethod: 'cap' }
+                margin: { item: 12, axis: 18 }
             };
 
-            timeline = new vis.Timeline(container, itemsDataSet, groupsDataSet, options);
+            timeline = new vis.Timeline(container, itemsView, groupsDataSet, options);
             setupCustomPopup();
         }
 
         // ============================
-        // Lógica del Tooltip y Pop-up
+        // Lógica de Filtros (Prender/Apagar)
+        // ============================
+        function buildFilterButtons() {
+            const container = document.getElementById('category-filters-container');
+            container.innerHTML = '';
+
+            categoryMap.forEach((info, rawKey) => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn active';
+                btn.style.setProperty('--cat-color', info.color);
+                btn.innerHTML = `<i class="${info.icon}"></i> ${info.label}`;
+                
+                btn.addEventListener('click', () => {
+                    if (activeCategories.has(rawKey)) {
+                        activeCategories.delete(rawKey);
+                        btn.classList.remove('active');
+                    } else {
+                        activeCategories.add(rawKey);
+                        btn.classList.add('active');
+                    }
+                    updateAllButtonState();
+                    itemsView.refresh(); // Actualiza la vista de la timeline de inmediato
+                });
+
+                container.appendChild(btn);
+            });
+
+            // Botón "Todas"
+            const btnAll = document.getElementById('btn-toggle-all');
+            btnAll.addEventListener('click', () => {
+                const allActive = activeCategories.size === categoryMap.size;
+                const buttons = container.querySelectorAll('.filter-btn');
+
+                if (allActive) {
+                    activeCategories.clear();
+                    buttons.forEach(b => b.classList.remove('active'));
+                    btnAll.classList.remove('active');
+                } else {
+                    categoryMap.forEach((_, key) => activeCategories.add(key));
+                    buttons.forEach(b => b.classList.add('active'));
+                    btnAll.classList.add('active');
+                }
+                itemsView.refresh();
+            });
+        }
+
+        function updateAllButtonState() {
+            const btnAll = document.getElementById('btn-toggle-all');
+            if (activeCategories.size === categoryMap.size) {
+                btnAll.classList.add('active');
+            } else {
+                btnAll.classList.remove('active');
+            }
+        }
+
+        // ============================
+        // Lógica del Pop-up Interactivo
         // ============================
         function setupCustomPopup() {
             let hideTimeout;
@@ -385,7 +530,6 @@
                 let item = itemsDataSet.get(props.item);
                 if (!item || !item.customData) return;
 
-                // Inyectar datos e icono de la categoría
                 ttIcon.className = item.customData.icon;
                 ttIcon.style.color = item.customData.categoryColor;
                 ttCategory.innerText = item.customData.categoryTitle;
@@ -414,7 +558,7 @@
                 tooltip.style.top = topPos + 'px';
             });
 
-            timeline.on('itemout', function (props) {
+            timeline.on('itemout', function () {
                 hideTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 300); 
             });
 
