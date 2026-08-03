@@ -120,10 +120,10 @@
             overflow: hidden;
         }
 
-        /* Eje Y: Localidades fijas */
+        /* Eje Y: Localidades fijas (Altura reducida) */
         .vis-labelset .vis-label {
-            height: 56px !important; /* Más alto para acomodar puntos grandes */
-            line-height: 56px;
+            height: 44px !important;
+            line-height: 44px;
             font-size: 13px;
             font-weight: 600;
             color: var(--text-main);
@@ -134,7 +134,7 @@
             align-items: center;
         }
         .vis-group {
-            height: 56px !important;
+            height: 44px !important;
             border-bottom: 1px solid #f8fafc;
         }
 
@@ -146,7 +146,7 @@
         }
 
         /* ============================
-           Tamaño y Diseño de los Puntos (NUEVO)
+           Tamaño y Diseño de los Puntos (Más chicos)
            ============================ */
         .vis-item {
             cursor: pointer;
@@ -158,36 +158,35 @@
             justify-content: center;
         }
         
-        /* Efecto al pasar el mouse por encima del punto en el gráfico */
         .vis-item:hover {
             transform: scale(1.15) translateY(-1px);
             box-shadow: 0 6px 16px rgba(0,0,0,0.15);
             z-index: 999 !important;
         }
 
-        /* PUNTOS INDIVIDUALES (Círculos grandes) */
+        /* PUNTOS INDIVIDUALES (Círculos achicados) */
         .vis-item.vis-box {
             border-radius: 50% !important;
-            width: 38px !important;
-            height: 38px !important;
+            width: 26px !important;
+            height: 26px !important;
             padding: 0 !important;
         }
 
-        /* RANGOS DE TIEMPO (Barras redondeadas) */
+        /* RANGOS DE TIEMPO (Barras achicadas) */
         .vis-item.vis-range {
-            border-radius: 10px;
-            height: 38px;
+            border-radius: 8px;
+            height: 26px;
             opacity: 0.95;
-            padding: 0 10px;
+            padding: 0 8px;
         }
         .vis-item.vis-range .vis-item-content {
             color: #ffffff !important;
         }
 
-        /* Ícono en el interior de los puntos/barras */
+        /* Ícono en el interior */
         .vis-item-content {
             padding: 0;
-            font-size: 16px; /* Ícono más grande */
+            font-size: 12px; /* Ícono más proporcionado */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -209,7 +208,7 @@
             z-index: 1000;
             border: 1px solid #eaeaea;
             font-size: 14px;
-            pointer-events: auto; /* Permite interactuar con el popup */
+            pointer-events: auto;
         }
         .tt-header {
             display: flex;
@@ -227,7 +226,7 @@
             color: #444;
         }
         .btn-more {
-            background-color: #3498db; /* Azul original */
+            background-color: #3498db;
             color: white;
             border: none;
             padding: 8px 15px;
@@ -302,7 +301,7 @@
     <div id="loader">Cargando datos desde CSV... <i class="fas fa-spinner fa-spin"></i></div>
     <div id="visualization" style="display:none;"></div>
 
-    <!-- Pop-up Interactivo (Restaurado a V1 con Hover) -->
+    <!-- Pop-up Interactivo (V1 Hover) -->
     <div id="timeline-tooltip">
         <div class="tt-header">
             <i id="tt-icon" class="fas fa-circle"></i>
@@ -416,7 +415,6 @@
                     type = 'range'; 
                 } else {
                     start = year + '-01-01';
-                    // Usamos 'box' forzosamente para poder redondearlo como un círculo perfecto mediante CSS
                     type = 'box'; 
                 }
 
@@ -470,7 +468,10 @@
                     minorLabels: { millisecond:'YYYY', second:'YYYY', minute:'YYYY', hour:'YYYY', weekday:'YYYY', day:'YYYY', month:'YYYY', year:'YYYY' }
                 },
                 margin: { item: 12, axis: 18 },
-                tooltip: { followMouse: false } // Se desactiva tooltip nativo
+                tooltip: { followMouse: false }, // Se desactiva tooltip nativo
+                interaction: {
+                    hover: true // OBLIGATORIO para que funcione el evento 'itemover'
+                }
             };
 
             timeline = new vis.Timeline(container, itemsView, groupsDataSet, options);
@@ -547,7 +548,6 @@
             const btnMore = document.getElementById('tt-btn-more');
             const fullContent = document.getElementById('tt-full-content');
 
-            // Evento HOVER (pasar el mouse por encima)
             timeline.on('itemover', function (props) {
                 clearTimeout(hideTimeout);
                 
@@ -557,7 +557,7 @@
                 // Llenar contenido
                 ttIcon.className = item.customData.icon;
                 ttCategory.innerText = item.customData.categoryTitle || "General";
-                ttCategory.style.color = item.customData.categoryColor; // Detalle de color al texto de la categoría
+                ttCategory.style.color = item.customData.categoryColor;
                 ttIcon.style.color = item.customData.categoryColor;
                 
                 ttFirstSentence.innerText = item.customData.firstSentence;
@@ -565,42 +565,40 @@
                 ttFuente.innerText = item.customData.source || "S/D";
                 ttPag.innerText = item.customData.page || "S/D";
 
-                // Resetear estado del botón y texto desplegable
+                // Resetear estado
                 fullContent.style.display = 'none';
                 btnMore.style.display = 'flex';
 
-                // Posicionamiento calculado para que no se salga de la pantalla
-                const { pageX, pageY } = props.event;
+                // Captura segura de coordenadas del mouse
+                let mouseX = props.event.pageX !== undefined ? props.event.pageX : props.event.clientX + window.scrollX;
+                let mouseY = props.event.pageY !== undefined ? props.event.pageY : props.event.clientY + window.scrollY;
+
                 tooltip.style.display = 'block'; 
                 let ttRect = tooltip.getBoundingClientRect();
                 
-                let topPos = pageY + 15;
-                let leftPos = pageX + 15;
+                let topPos = mouseY + 15;
+                let leftPos = mouseX + 15;
                 
+                // Evitar que el tooltip se salga de la pantalla por la derecha
                 if (leftPos + ttRect.width > window.innerWidth) {
-                    leftPos = pageX - ttRect.width - 15;
+                    leftPos = mouseX - ttRect.width - 15;
                 }
                 
                 tooltip.style.left = leftPos + 'px';
                 tooltip.style.top = topPos + 'px';
             });
 
-            // Ocultar con retardo al retirar el mouse del punto del gráfico
             timeline.on('itemout', function () {
                 hideTimeout = setTimeout(() => { 
                     tooltip.style.display = 'none'; 
-                }, 400); // 400 milisegundos de gracia para que puedas mover el mouse hacia el popup
+                }, 400); 
             });
 
-            // Si el mouse entra al tooltip (para leer o dar click a Ver Más), cancelar el cierre
             tooltip.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
-            
-            // Si el mouse sale del tooltip, cerrarlo
             tooltip.addEventListener('mouseleave', () => {
                 hideTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 300);
             });
 
-            // Interacción de "Ver más"
             btnMore.addEventListener('click', () => {
                 fullContent.style.display = 'block';
                 btnMore.style.display = 'none';
