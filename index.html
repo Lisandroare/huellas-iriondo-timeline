@@ -6,7 +6,7 @@
     <title>Cronología Histórica Interactiva</title>
     
     <!-- Fuentes modernas (Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <!-- Iconos de FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -22,20 +22,20 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f4f7f6;
+            background-color: #f8f9fa;
             color: #2c3e50;
         }
         h1 {
             text-align: center;
             color: #1a252f;
             margin-bottom: 25px;
-            font-weight: 600;
+            font-weight: 700;
         }
         
         /* Contenedor de la línea de tiempo */
         #visualization {
             width: 100%;
-            height: 80vh;
+            height: 85vh;
             border: 1px solid #e0e6ed;
             border-radius: 12px;
             background: #ffffff;
@@ -43,10 +43,29 @@
             overflow: hidden;
         }
 
-        /* Estilos personalizados para los elementos de Vis-Timeline */
+        /* Eje de años y panel izquierdo */
+        .vis-time-axis .vis-text {
+            font-weight: 600;
+            color: #34495e;
+            font-size: 14px;
+        }
+        
+        .vis-labelset .vis-label {
+            /* Fija un tamaño base para que todas las localidades se vean uniformes */
+            display: flex;
+            align-items: center;
+            padding: 0 15px !important;
+            font-weight: 600;
+            font-size: 14px;
+            color: #2c3e50;
+            border-bottom: 1px solid #f0f0f0;
+            min-height: 50px;
+        }
+
+        /* Estilos personalizados para los puntos/barras de Vis-Timeline */
         .vis-item {
             border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             font-size: 14px;
             cursor: pointer;
             transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -54,20 +73,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: white; 
         }
         .vis-item:hover {
-            transform: scale(1.04) translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.2);
             z-index: 999 !important;
         }
         .vis-item-content {
             padding: 4px 8px;
             font-size: 16px;
         }
-        .vis-group {
-            font-weight: 600;
-            font-size: 14px;
-        }
+
+        /* Lógica para diferenciar Puntos vs Rangos temporalmente */
+        .vis-item.vis-point { background-color: white !important; }
+        .vis-item.vis-range { opacity: 0.9; }
+        .vis-item.vis-range .vis-item-content { color: white !important; }
 
         /* ============================
            Pop-up (Tooltip Interactivo)
@@ -83,7 +104,7 @@
             z-index: 1000;
             border: 1px solid #eaeaea;
             font-size: 14px;
-            pointer-events: auto; /* Permite interactuar con su contenido */
+            pointer-events: auto;
         }
         .tt-header {
             display: flex;
@@ -101,7 +122,7 @@
             color: #444;
         }
         .btn-more {
-            background-color: #3498db;
+            background-color: #34495e;
             color: white;
             border: none;
             padding: 8px 15px;
@@ -118,7 +139,7 @@
             gap: 8px;
         }
         .btn-more:hover {
-            background-color: #2980b9;
+            background-color: #2c3e50;
         }
         .tt-full-content {
             display: none;
@@ -133,6 +154,7 @@
             color: #555;
             max-height: 200px;
             overflow-y: auto;
+            padding-right: 5px;
         }
         .tt-meta {
             font-size: 12px;
@@ -142,17 +164,12 @@
             border-radius: 6px;
             line-height: 1.6;
         }
-        .tt-meta strong {
-            color: #34495e;
-        }
         
-        /* Animación suave al desplegar */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-5px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Pantalla de carga */
         #loader {
             text-align: center;
             padding: 60px;
@@ -163,11 +180,11 @@
 </head>
 <body>
 
-    <h1>Cronología Interactiva</h1>
+    <h1>Cronología Histórica</h1>
     <div id="loader">Cargando datos desde CSV... <i class="fas fa-spinner fa-spin"></i></div>
     <div id="visualization" style="display:none;"></div>
 
-    <!-- Contenedor del Pop-up Interactivo -->
+    <!-- Contenedor del Pop-up -->
     <div id="timeline-tooltip">
         <div class="tt-header">
             <i id="tt-icon" class="fas fa-circle"></i>
@@ -176,7 +193,6 @@
         <p class="tt-first-sentence" id="tt-first-sentence"></p>
         <button class="btn-more" id="tt-btn-more">Ver más <i class="fas fa-chevron-down"></i></button>
         
-        <!-- Contenido desplegable -->
         <div class="tt-full-content" id="tt-full-content">
             <p class="tt-full-text" id="tt-full-text"></p>
             <div class="tt-meta">
@@ -186,59 +202,50 @@
         </div>
     </div>
 
-    <!-- Librerías de JS -->
+    <!-- Librerías -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
 
     <script>
-        // Archivo objetivo (debe estar en la misma ruta que el index.html en Github)
         const fileUrl = "CRONOLOGIAS FINAL.csv";
-        
-        // Paleta de colores modernos para las localidades (Eje Vertical)
-        const colors = [
-            "#4e79a7", "#f28e2c", "#e15759", "#76b7b2", "#59a14f", 
-            "#edc949", "#af7aa1", "#ff9da7", "#9c755f", "#bab0ab",
-            "#2c3e50", "#8e44ad", "#27ae60", "#d35400", "#c0392b"
-        ];
-        let colorMap = {};
 
-        // Función para asignar colores únicos a cada Localidad
-        function getColor(localidad) {
-            if (!colorMap[localidad]) {
-                colorMap[localidad] = colors[Object.keys(colorMap).length % colors.length];
-            }
-            return colorMap[localidad];
-        }
-
-        // Función para asignar iconos (FontAwesome) analizando las Categorías
-        function getIcon(categoria) {
+        // Mapeo estricto de Categorías (Columna D) a un Color y un Icono
+        function getCategoryStyle(categoria) {
             const cat = (categoria || "").toLowerCase();
-            if (cat.includes("transporte") || cat.includes("comunicacion")) return "fas fa-bus";
-            if (cat.includes("energía") || cat.includes("energia")) return "fas fa-bolt";
-            if (cat.includes("institución") || cat.includes("institucion")) return "fas fa-building";
-            if (cat.includes("política") || cat.includes("politica")) return "fas fa-landmark";
-            if (cat.includes("educación") || cat.includes("educacion")) return "fas fa-graduation-cap";
-            if (cat.includes("salud")) return "fas fa-hospital";
-            if (cat.includes("economía") || cat.includes("economia")) return "fas fa-chart-line";
-            return "fas fa-calendar-check"; // Icono por defecto
+            
+            if (cat.includes("transporte") || cat.includes("comunicacion")) {
+                return { color: "#3498db", icon: "fas fa-train", title: "Transporte y Comunicaciones" }; // Azul
+            }
+            if (cat.includes("energía") || cat.includes("energia")) {
+                return { color: "#f1c40f", icon: "fas fa-bolt", title: "Energía" }; // Amarillo
+            }
+            if (cat.includes("infraestructura") || cat.includes("institucion")) {
+                return { color: "#9b59b6", icon: "fas fa-building", title: "Infraestructura e Instituciones" }; // Violeta
+            }
+            if (cat.includes("trabajo")) {
+                return { color: "#e67e22", icon: "fas fa-hammer", title: "Trabajo" }; // Naranja
+            }
+            if (cat.includes("identidad") || cat.includes("celebración")) {
+                return { color: "#e74c3c", icon: "fas fa-star", title: "Identidad y Celebración" }; // Rojo
+            }
+            
+            // Default por si hay celdas vacías
+            return { color: "#95a5a6", icon: "fas fa-calendar-check", title: "Histórico" }; // Gris
         }
 
         // Función para extraer solo la primera oración del texto
         function getFirstSentence(text) {
             if (!text) return "";
-            // Busca hasta encontrar el primer punto, signo de exclamación o interrogación
             let match = text.match(/(.*?[.!?])(?:\s|$)/);
             return match ? match[1] : text;
         }
 
-        // Carga y parseo del CSV (Adaptado a codificación ISO-8859-1 para respetar tildes y ñ)
         fetch(fileUrl)
             .then(response => {
                 if (!response.ok) throw new Error("No se pudo cargar el archivo");
                 return response.arrayBuffer();
             })
             .then(buffer => {
-                // Decodificar el texto con soporte al español
                 let decoder = new TextDecoder('iso-8859-1'); 
                 let csvText = decoder.decode(buffer);
                 
@@ -253,7 +260,7 @@
                 });
             })
             .catch(err => {
-                document.getElementById('loader').innerHTML = `<strong>Error:</strong> ${err.message}.<br>Verifica que el archivo 'CRONOLOGIAS FINAL.csv' esté subido en el mismo lugar que este index.html en GitHub.`;
+                document.getElementById('loader').innerHTML = `<strong>Error:</strong> ${err.message}.`;
             });
 
         let timeline;
@@ -274,21 +281,21 @@
 
                 if (!year || !loc) return;
 
-                // 1. Conformar los Grupos (Eje Vertical) por Localidad
+                // Panel Izquierdo (Eje Y: Localidades uniformes)
                 if (!localidades.has(loc)) {
                     localidades.add(loc);
-                    let color = getColor(loc);
                     groups.push({
                         id: loc,
-                        content: `<span style="color:${color};">${loc}</span>`,
-                        style: `background-color: ${color}08;` // Color de fondo muy tenue
+                        content: loc
                     });
                 }
 
-                // 2. Conformar Puntos y Barras
+                // Determinamos estilos basados en la Categoría (Columna D)
+                let styleData = getCategoryStyle(cat);
+                
                 let start, end = null, type = 'box';
                 
-                // Si es un periodo (ej: 1955-1960), se crea un Rango (Barra). Si no, un Punto (Línea)
+                // Determinamos si es Rango o Punto
                 if (year.includes('-')) {
                     let parts = year.split('-');
                     start = parts[0].trim() + '-01-01';
@@ -299,62 +306,70 @@
                     type = 'point'; 
                 }
 
-                let iconClass = getIcon(cat);
-                let color = getColor(loc);
-                
+                // Si es un periodo/rango, el fondo es de color. Si es un punto, el fondo es blanco y el borde es de color.
+                let inlineStyle = type === 'range' 
+                    ? `background-color: ${styleData.color}; border-color: ${styleData.color};` 
+                    : `border-color: ${styleData.color}; color: ${styleData.color};`;
+
                 items.push({
                     id: index,
                     group: loc,
                     start: start,
                     end: end,
                     type: type,
-                    // Se inserta la iconografía dentro del elemento visual
-                    content: `<div class="vis-item-content"><i class="${iconClass}"></i></div>`,
-                    style: `border-color: ${color}; background-color: white; color: ${color};`,
-                    customData: { // Guardamos la info para alimentar el pop-up luego
+                    content: `<div class="vis-item-content"><i class="${styleData.icon}"></i></div>`,
+                    style: inlineStyle,
+                    customData: {
                         firstSentence: getFirstSentence(desc),
                         fullText: desc,
-                        category: cat,
-                        icon: iconClass,
+                        categoryTitle: styleData.title,
+                        categoryColor: styleData.color,
+                        icon: styleData.icon,
                         source: fuente,
                         page: pag
                     }
                 });
             });
 
-            // Convertimos arreglos de objetos a Datasets propios de la librería
             itemsDataSet = new vis.DataSet(items);
             let groupsDataSet = new vis.DataSet(groups);
 
             let container = document.getElementById('visualization');
             
-            // 3. Configuración Principal de Interacciones
+            // CONFIGURACIONES DE ZOOM Y LÍMITES SOLICITADOS
             let options = {
-                zoomable: true,          // Zoom con scroll de mouse activado
-                moveable: true,          // Desplazamiento lateral activado
-                orientation: 'top',      // Eje de años horizontal situado arriba
-                stack: true,             // Evita que los recuadros se tapen entre sí
-                margin: { item: 15, axis: 25 },
-                tooltip: {
-                    followMouse: false,  // Desactivamos el tooltip nativo a favor de uno a medida
-                    overflowMethod: 'cap'
-                }
+                zoomable: true,
+                moveable: true,
+                orientation: 'top', 
+                stack: true,
+                
+                // Límites temporales: No se podrá navegar más allá de estas fechas
+                min: new Date(1770, 0, 1),
+                max: new Date(2027, 11, 31),
+                
+                // Límite de Zoom Hacia adentro: 1 Año (Evita que la "Fila A" muestre meses o días)
+                zoomMin: 1000 * 60 * 60 * 24 * 365,
+                
+                // Fuerza a que la etiqueta temporal muestre únicamente Años
+                format: {
+                    minorLabels: { millisecond:'YYYY', second:'YYYY', minute:'YYYY', hour:'YYYY', weekday:'YYYY', day:'YYYY', month:'YYYY', year:'YYYY' }
+                },
+
+                margin: { item: 15, axis: 20 },
+                tooltip: { followMouse: false, overflowMethod: 'cap' }
             };
 
             timeline = new vis.Timeline(container, itemsDataSet, groupsDataSet, options);
-
-            // Activar la lógica del Pop-up con "Ver más"
             setupCustomPopup();
         }
 
         // ============================
-        // Lógica del Tooltip y "Ver más"
+        // Lógica del Tooltip y Pop-up
         // ============================
         function setupCustomPopup() {
             let hideTimeout;
             const tooltip = document.getElementById('timeline-tooltip');
             
-            // Referencias del DOM
             const ttIcon = document.getElementById('tt-icon');
             const ttCategory = document.getElementById('tt-category');
             const ttFirstSentence = document.getElementById('tt-first-sentence');
@@ -364,26 +379,26 @@
             const btnMore = document.getElementById('tt-btn-more');
             const fullContent = document.getElementById('tt-full-content');
 
-            // Evento al situarse SOBRE la barra o punto
             timeline.on('itemover', function (props) {
                 clearTimeout(hideTimeout);
                 
                 let item = itemsDataSet.get(props.item);
                 if (!item || !item.customData) return;
 
-                // Cargar los datos del elemento
+                // Inyectar datos e icono de la categoría
                 ttIcon.className = item.customData.icon;
-                ttCategory.innerText = item.customData.category || "General";
+                ttIcon.style.color = item.customData.categoryColor;
+                ttCategory.innerText = item.customData.categoryTitle;
+                
                 ttFirstSentence.innerText = item.customData.firstSentence;
                 ttFullText.innerText = item.customData.fullText;
                 ttFuente.innerText = item.customData.source || "S/D";
                 ttPag.innerText = item.customData.page || "S/D";
 
-                // Ocultar texto completo y mostrar botón
                 fullContent.style.display = 'none';
                 btnMore.style.display = 'flex';
+                btnMore.style.backgroundColor = item.customData.categoryColor;
 
-                // Posicionamiento dinámico cerca del ratón
                 const { pageX, pageY } = props.event;
                 let topPos = pageY + 15;
                 let leftPos = pageX + 15;
@@ -391,7 +406,6 @@
                 tooltip.style.display = 'block'; 
                 let ttRect = tooltip.getBoundingClientRect();
                 
-                // Evita que el tooltip se salga de la pantalla por la derecha
                 if (leftPos + ttRect.width > window.innerWidth) {
                     leftPos = pageX - ttRect.width - 15;
                 }
@@ -400,25 +414,13 @@
                 tooltip.style.top = topPos + 'px';
             });
 
-            // Evento al sacar el ratón de la barra o punto
             timeline.on('itemout', function (props) {
-                // Da tiempo (300ms) para mover el ratón hacia el pop-up sin que desaparezca
-                hideTimeout = setTimeout(() => {
-                    tooltip.style.display = 'none';
-                }, 300); 
+                hideTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 300); 
             });
 
-            // Mantiene el pop-up abierto si el cursor entra a este
-            tooltip.addEventListener('mouseenter', () => {
-                clearTimeout(hideTimeout);
-            });
+            tooltip.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+            tooltip.addEventListener('mouseleave', () => tooltip.style.display = 'none');
 
-            // Se cierra cuando el cursor sale totalmente de la caja del pop-up
-            tooltip.addEventListener('mouseleave', () => {
-                tooltip.style.display = 'none';
-            });
-
-            // Expande hacia abajo el texto al presionar "Ver más"
             btnMore.addEventListener('click', () => {
                 fullContent.style.display = 'block';
                 btnMore.style.display = 'none';
