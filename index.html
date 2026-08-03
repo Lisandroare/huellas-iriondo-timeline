@@ -6,7 +6,7 @@
     <title>Cronología Histórica Interactiva</title>
     
     <!-- Fuentes modernas (Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Iconos de FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -112,7 +112,7 @@
            ============================ */
         #visualization {
             width: 100%;
-            height: 75vh; /* Ajuste responsivo de altura */
+            height: 75vh;
             border: 1px solid var(--border-color);
             border-radius: 12px;
             background: var(--card-bg);
@@ -120,7 +120,7 @@
             overflow: hidden;
         }
 
-        /* Fijación de altura para que el zoom no deforme las filas de localidades */
+        /* Eje Y: Localidades fijas sin deformarse con el zoom */
         .vis-labelset .vis-label {
             height: 48px !important;
             line-height: 48px;
@@ -138,14 +138,14 @@
             border-bottom: 1px solid #f8fafc;
         }
 
-        /* Estilo Eje Horizontal A (Años) */
+        /* Eje X: Años */
         .vis-time-axis .vis-text {
             font-weight: 600;
             color: #475569;
             font-size: 13px;
         }
 
-        /* Íconos y Puntos/Barras */
+        /* Estética de Puntos y Barras */
         .vis-item {
             border-radius: 20px;
             cursor: pointer;
@@ -156,62 +156,107 @@
         .vis-item:hover {
             transform: scale(1.1) translateY(-1px);
             box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-            z-index: 999 !important;
+            z-index: 900 !important;
         }
+        /* Icono dentro del gráfico */
         .vis-item-content {
             padding: 3px 8px;
             font-size: 14px;
         }
+        /* Rango (Barras) */
         .vis-item.vis-range {
-            border-radius: 6px;
-            opacity: 0.9;
+            border-radius: 8px;
+            opacity: 0.95;
         }
         .vis-item.vis-range .vis-item-content {
             color: #ffffff !important;
         }
 
         /* ============================
-           Pop-up (Restaurado de la versión 1)
+           Pop-up (Tarjeta de Información con Click)
            ============================ */
         #timeline-tooltip {
             position: absolute;
             display: none;
-            width: 320px;
+            width: 340px;
             background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.2);
-            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
             z-index: 1000;
-            border: 1px solid #eaeaea;
+            border: 1px solid var(--border-color);
             font-size: 14px;
+            overflow: hidden; /* Para respetar bordes redondeados */
             pointer-events: auto;
         }
+
+        /* Botón cerrar X */
+        .tt-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 16px;
+            cursor: pointer;
+            transition: color 0.2s;
+            z-index: 10;
+        }
+        .tt-close-btn:hover {
+            color: #334155;
+        }
+
+        /* Cabecera del pop-up */
         .tt-header {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 12px;
-            font-weight: 600;
-            color: #2c3e50;
-            border-bottom: 1px solid #f0f0f0;
-            padding-bottom: 10px;
+            padding: 16px 20px;
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        /* Réplica estética del ícono circular */
+        .tt-icon-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        
+        .tt-category-title {
+            font-weight: 700;
+            color: var(--text-main);
+            font-size: 15px;
+            margin: 0;
+            padding-right: 20px; /* Espacio para la X */
+        }
+
+        /* Cuerpo del pop-up */
+        .tt-body {
+            padding: 20px;
         }
         .tt-first-sentence {
-            margin: 0 0 15px 0;
+            margin: 0 0 16px 0;
             line-height: 1.6;
-            color: #444;
+            color: #334155;
+            font-size: 14px;
         }
         .btn-more {
-            background-color: #3498db; /* Azul original de la v1 */
             color: white;
             border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
+            padding: 10px 15px;
+            border-radius: 8px;
             cursor: pointer;
             font-family: inherit;
             font-size: 13px;
             font-weight: 600;
-            transition: background 0.2s;
+            transition: filter 0.2s;
             width: 100%;
             display: flex;
             justify-content: center;
@@ -219,32 +264,33 @@
             gap: 8px;
         }
         .btn-more:hover {
-            background-color: #2980b9;
+            filter: brightness(0.9);
         }
         .tt-full-content {
             display: none;
-            margin-top: 15px;
-            border-top: 1px dashed #dcdcdc;
-            padding-top: 15px;
+            margin-top: 16px;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 16px;
             animation: fadeIn 0.3s ease;
         }
         .tt-full-text {
-            margin: 0 0 15px 0;
+            margin: 0 0 16px 0;
             line-height: 1.6;
-            color: #555;
+            color: #475569;
             max-height: 200px;
             overflow-y: auto;
+            padding-right: 5px;
         }
         .tt-meta {
             font-size: 12px;
-            color: #7f8c8d;
-            background: #f8f9fa;
+            color: #64748b;
+            background: #f1f5f9;
             padding: 10px;
-            border-radius: 6px;
-            line-height: 1.6;
+            border-radius: 8px;
+            line-height: 1.5;
         }
         .tt-meta strong {
-            color: #34495e;
+            color: #334155;
         }
 
         @keyframes fadeIn {
@@ -278,20 +324,27 @@
     <div id="loader">Cargando datos desde CSV... <i class="fas fa-spinner fa-spin"></i></div>
     <div id="visualization" style="display:none;"></div>
 
-    <!-- Pop-up Interactivo (V1) -->
+    <!-- Pop-up Interactivo (Diseño Tarjeta / Funciona con Click) -->
     <div id="timeline-tooltip">
-        <div class="tt-header">
-            <i id="tt-icon" class="fas fa-circle"></i>
-            <span id="tt-category">Categoría</span>
-        </div>
-        <p class="tt-first-sentence" id="tt-first-sentence"></p>
-        <button class="btn-more" id="tt-btn-more">Ver más <i class="fas fa-chevron-down"></i></button>
+        <button class="tt-close-btn" id="tt-close-btn"><i class="fas fa-times"></i></button>
         
-        <div class="tt-full-content" id="tt-full-content">
-            <p class="tt-full-text" id="tt-full-text"></p>
-            <div class="tt-meta">
-                <div><strong>Fuente:</strong> <span id="tt-fuente"></span></div>
-                <div><strong>Página:</strong> <span id="tt-pag"></span></div>
+        <div class="tt-header">
+            <div class="tt-icon-circle" id="tt-icon-circle">
+                <i id="tt-icon" class="fas fa-circle"></i>
+            </div>
+            <h3 class="tt-category-title" id="tt-category">Categoría</h3>
+        </div>
+        
+        <div class="tt-body">
+            <p class="tt-first-sentence" id="tt-first-sentence"></p>
+            <button class="btn-more" id="tt-btn-more">Ver más <i class="fas fa-chevron-down"></i></button>
+            
+            <div class="tt-full-content" id="tt-full-content">
+                <p class="tt-full-text" id="tt-full-text"></p>
+                <div class="tt-meta">
+                    <div><strong>Fuente:</strong> <span id="tt-fuente"></span></div>
+                    <div><strong>Página:</strong> <span id="tt-pag"></span></div>
+                </div>
             </div>
         </div>
     </div>
@@ -373,17 +426,15 @@
 
                 if (!year || !loc) return;
 
-                // Registro de Localidades (Columna B)
                 if (!localidades.has(loc)) {
                     localidades.add(loc);
                     groups.push({ id: loc, content: loc });
                 }
 
-                // Categorías (Columna D)
                 let catInfo = getCategoryInfo(cat);
                 if (!categoryMap.has(catInfo.raw)) {
                     categoryMap.set(catInfo.raw, catInfo);
-                    activeCategories.add(catInfo.raw); // Activas por defecto
+                    activeCategories.add(catInfo.raw);
                 }
 
                 let start, end = null, type = 'box';
@@ -422,7 +473,6 @@
                 });
             });
 
-            // Datasets & DataView para filtrado en tiempo real
             itemsDataSet = new vis.DataSet(items);
             let groupsDataSet = new vis.DataSet(groups);
 
@@ -432,38 +482,31 @@
                 }
             });
 
-            // Construir Botones de Filtro
             buildFilterButtons();
 
             let container = document.getElementById('visualization');
             
-            // OPCIONES DE NAVEGACIÓN Y ZOOM
             let options = {
-                zoomable: true,          // Zoom con scroll del mouse aplicado de forma predeterminada al eje del tiempo (años)
-                moveable: true,          // Permite arrastrar la línea de tiempo de izq a derecha
-                orientation: 'top',      // Años fijados horizontalmente arriba
+                zoomable: true,
+                moveable: true,
+                orientation: 'top',
                 stack: true,
-                
-                // Límites temporales estrictos
                 min: new Date(1770, 0, 1),
                 max: new Date(2027, 11, 31),
-                
-                // Límite Zoom In (Escala mínima anual para que la Fila A no muestre meses/días)
                 zoomMin: 1000 * 60 * 60 * 24 * 365,
-                
                 format: {
                     minorLabels: { millisecond:'YYYY', second:'YYYY', minute:'YYYY', hour:'YYYY', weekday:'YYYY', day:'YYYY', month:'YYYY', year:'YYYY' }
                 },
                 margin: { item: 12, axis: 18 },
-                tooltip: { followMouse: false, overflowMethod: 'cap' } // Desactivamos tooltip nativo
+                tooltip: { followMouse: false } // Desactiva tooltip nativo
             };
 
             timeline = new vis.Timeline(container, itemsView, groupsDataSet, options);
-            setupCustomPopup();
+            setupClickPopup();
         }
 
         // ============================
-        // Lógica de Filtros (Prender/Apagar)
+        // Lógica de Filtros
         // ============================
         function buildFilterButtons() {
             const container = document.getElementById('category-filters-container');
@@ -486,11 +529,9 @@
                     updateAllButtonState();
                     itemsView.refresh();
                 });
-
                 container.appendChild(btn);
             });
 
-            // Botón "Todas"
             const btnAll = document.getElementById('btn-toggle-all');
             btnAll.addEventListener('click', () => {
                 const allActive = activeCategories.size === categoryMap.size;
@@ -519,14 +560,18 @@
         }
 
         // ============================
-        // Lógica del Pop-up Interactivo (Restaurada V1)
+        // Lógica del Pop-up (EVENTO CLICK)
         // ============================
-        function setupCustomPopup() {
-            let hideTimeout;
+        function setupClickPopup() {
             const tooltip = document.getElementById('timeline-tooltip');
+            const closeBtn = document.getElementById('tt-close-btn');
             
+            // Referencias estéticas del popup
+            const ttIconCircle = document.getElementById('tt-icon-circle');
             const ttIcon = document.getElementById('tt-icon');
             const ttCategory = document.getElementById('tt-category');
+            
+            // Textos y Botones
             const ttFirstSentence = document.getElementById('tt-first-sentence');
             const ttFullText = document.getElementById('tt-full-text');
             const ttFuente = document.getElementById('tt-fuente');
@@ -534,46 +579,60 @@
             const btnMore = document.getElementById('tt-btn-more');
             const fullContent = document.getElementById('tt-full-content');
 
-            timeline.on('itemover', function (props) {
-                clearTimeout(hideTimeout);
-                
-                let item = itemsDataSet.get(props.item);
-                if (!item || !item.customData) return;
+            // Evento CLICK en la línea de tiempo
+            timeline.on('click', function (props) {
+                // Si hizo clic en un elemento (punto o barra)
+                if (props.item) {
+                    let item = itemsDataSet.get(props.item);
+                    if (!item || !item.customData) return;
 
-                // Datos al pop-up
-                ttIcon.className = item.customData.icon;
-                ttCategory.innerText = item.customData.categoryTitle || "General";
-                ttFirstSentence.innerText = item.customData.firstSentence;
-                ttFullText.innerText = item.customData.fullText;
-                ttFuente.innerText = item.customData.source || "S/D";
-                ttPag.innerText = item.customData.page || "S/D";
+                    // 1. Estética (Réplica del gráfico)
+                    ttIconCircle.style.backgroundColor = item.customData.categoryColor;
+                    ttIcon.className = item.customData.icon;
+                    ttCategory.innerText = item.customData.categoryTitle || "General";
+                    
+                    // 2. Contenido
+                    ttFirstSentence.innerText = item.customData.firstSentence;
+                    ttFullText.innerText = item.customData.fullText;
+                    ttFuente.innerText = item.customData.source || "S/D";
+                    ttPag.innerText = item.customData.page || "S/D";
 
-                // Botón vuelve a su estado normal por defecto
-                fullContent.style.display = 'none';
-                btnMore.style.display = 'flex';
+                    // 3. Botón y Contenido desplegable (Reseteo)
+                    fullContent.style.display = 'none';
+                    btnMore.style.display = 'flex';
+                    btnMore.style.backgroundColor = item.customData.categoryColor; // Botón del color de la categoría
 
-                const { pageX, pageY } = props.event;
-                let topPos = pageY + 15;
-                let leftPos = pageX + 15;
-                
-                tooltip.style.display = 'block'; 
-                let ttRect = tooltip.getBoundingClientRect();
-                
-                if (leftPos + ttRect.width > window.innerWidth) {
-                    leftPos = pageX - ttRect.width - 15;
+                    // 4. Posición del Pop-up
+                    const { pageX, pageY } = props.event;
+                    
+                    // Mostrar primero para poder calcular su tamaño
+                    tooltip.style.display = 'block'; 
+                    let ttRect = tooltip.getBoundingClientRect();
+                    
+                    let topPos = pageY + 15;
+                    let leftPos = pageX + 15;
+                    
+                    // Evitar que se desborde la pantalla por la derecha
+                    if (leftPos + ttRect.width > window.innerWidth) {
+                        leftPos = pageX - ttRect.width - 15;
+                    }
+                    
+                    // Posicionar
+                    tooltip.style.left = leftPos + 'px';
+                    tooltip.style.top = topPos + 'px';
+                } 
+                // Si hizo clic en un lugar vacío de la línea de tiempo
+                else {
+                    tooltip.style.display = 'none';
                 }
-                
-                tooltip.style.left = leftPos + 'px';
-                tooltip.style.top = topPos + 'px';
             });
 
-            timeline.on('itemout', function () {
-                hideTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 300); 
+            // Botón "X" para cerrar
+            closeBtn.addEventListener('click', () => {
+                tooltip.style.display = 'none';
             });
 
-            tooltip.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
-            tooltip.addEventListener('mouseleave', () => tooltip.style.display = 'none');
-
+            // Botón "Ver más"
             btnMore.addEventListener('click', () => {
                 fullContent.style.display = 'block';
                 btnMore.style.display = 'none';
