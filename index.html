@@ -8,138 +8,179 @@
     <!-- Librerías de CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-timeline/7.7.2/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Fuentes elegantes: Lora para títulos, Inter para texto -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     
     <style>
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f8f9fa;
+            /* Fondo más sofisticado: un gradiente suave gris-azulado a blanco */
+            background: linear-gradient(135deg, #eef2f5 0%, #ffffff 100%);
+            min-height: 100vh;
         }
         
-        /* Contenedor principal de la línea de tiempo */
+        /* Contenedor principal con efecto Neumorfismo suave */
         #timeline {
             width: 100%;
-            height: 600px;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            background-color: #ffffff;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            height: 650px;
+            border: 1px solid #d1d9e6;
+            border-radius: 16px;
+            background-color: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.03);
+            backdrop-filter: blur(10px); /* Efecto vidrio */
         }
 
-        /* Estilos de los elementos (puntos y barras) */
+        /* Estilos del eje temporal y las grillas */
+        .vis-time-axis .vis-text {
+            font-family: 'Lora', serif;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 15px;
+        }
+        .vis-label {
+            font-family: 'Lora', serif !important;
+            font-size: 15px !important;
+            color: #1a202c !important;
+            letter-spacing: 0.5px;
+        }
+
+        /* Elementos (Puntos y Barras) */
         .vis-item {
-            border-radius: 6px;
+            border-radius: 8px;
             border: none;
             font-size: 14px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             cursor: pointer;
             overflow: hidden;
         }
         .vis-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
             z-index: 100 !important;
         }
-        .vis-item.vis-range {
-            opacity: 0.9;
-        }
-        .vis-item.vis-point {
-            background-color: transparent;
-        }
         .vis-item-content {
-            padding: 6px 10px;
+            padding: 8px 12px;
             display: flex;
             align-items: center;
             justify-content: center;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .vis-item.vis-point {
+            background-color: transparent;
+            box-shadow: none;
         }
         
-        /* Estilos del Pop-up (Tooltip) */
+        /* Estilos del Pop-up (Tooltip) Premium */
         #custom-tooltip {
             position: absolute;
             display: none;
-            width: 320px;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            width: 350px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 25px 50px rgba(31, 38, 135, 0.15), 0 0 0 1px rgba(0,0,0,0.02);
             z-index: 1000;
-            font-size: 14px;
-        }
-        #custom-tooltip .category-badge {
-            display: inline-block;
-            background: #f3f4f6;
-            color: #374151;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        #custom-tooltip p {
-            margin: 0 0 12px 0;
-            line-height: 1.5;
-            color: #1f2937;
-        }
-        .ver-mas-btn {
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            width: 100%;
-            transition: background 0.2s;
-        }
-        .ver-mas-btn:hover {
-            background-color: #2563eb;
+            font-size: 14.5px;
+            color: #334155;
         }
         
-        /* Contenido desplegable del Pop-up */
+        #custom-tooltip .category-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: #ffffff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #custom-tooltip p#tt-first-sentence {
+            font-family: 'Lora', serif;
+            font-size: 17px;
+            color: #0f172a;
+            line-height: 1.5;
+            font-weight: 600;
+            margin: 0 0 20px 0;
+        }
+
+        .ver-mas-btn {
+            background: linear-gradient(to right, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+            font-family: 'Inter', sans-serif;
+        }
+        .ver-mas-btn:hover {
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        /* Contenido desplegable */
         #tooltip-full-content {
             display: none;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #e5e7eb;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+        #tooltip-full-content p {
+            line-height: 1.6;
+            margin-bottom: 16px;
         }
         .fuente-info {
-            margin-top: 12px;
-            font-size: 12px;
-            color: #4b5563;
-            background: #f9fafb;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #e5e7eb;
+            font-size: 12.5px;
+            color: #475569;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #cbd5e1;
+            font-family: 'Inter', sans-serif;
         }
+        .fuente-info strong {
+            color: #1e293b;
+        }
+
         .loading {
             text-align: center;
-            padding: 50px;
-            font-size: 18px;
-            color: #6b7280;
+            padding: 80px;
+            font-size: 20px;
+            color: #64748b;
+            font-family: 'Lora', serif;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
 
-    <div id="loading" class="loading"><i class="fas fa-spinner fa-spin"></i> Cargando línea de tiempo...</div>
+    <div id="loading" class="loading"><i class="fas fa-spinner fa-spin"></i> Preparando la línea de tiempo histórica...</div>
+    <!-- Al contenedor se le asigna un tamaño estricto aquí y en las opciones de JS -->
     <div id="timeline" style="display: none;"></div>
 
-    <!-- Contenedor del Pop-up Interactivo -->
+    <!-- Pop-up Interactivo -->
     <div id="custom-tooltip">
         <div class="category-badge" id="tt-category"></div>
         <p id="tt-first-sentence"></p>
-        <button class="ver-mas-btn" id="btn-ver-mas">Ver más <i class="fas fa-chevron-down"></i></button>
+        <button class="ver-mas-btn" id="btn-ver-mas">Leer registro completo <i class="fas fa-chevron-down" style="margin-left:5px;"></i></button>
         
         <div id="tooltip-full-content">
             <p id="tt-full-desc"></p>
             <div class="fuente-info">
-                <strong>Fuente:</strong> <span id="tt-fuente"></span><br>
+                <strong>Fuente documental:</strong> <span id="tt-fuente"></span><br>
                 <strong>Página:</strong> <span id="tt-pag"></span>
             </div>
         </div>
@@ -150,10 +191,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
-        // Paleta de colores para las distintas localidades
-        const palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+        // Paleta de colores sofisticada con degradados (Gradients)
+        const premiumPalette = [
+            { main: '#1e3a8a', grad: 'linear-gradient(135deg, #1e40af, #3b82f6)' }, // Azules profundos
+            { main: '#7f1d1d', grad: 'linear-gradient(135deg, #991b1b, #ef4444)' }, // Rojos/Burdeos
+            { main: '#064e3b', grad: 'linear-gradient(135deg, #065f46, #10b981)' }, // Esmeraldas
+            { main: '#78350f', grad: 'linear-gradient(135deg, #92400e, #f59e0b)' }, // Oros/Ámbares
+            { main: '#4c1d95', grad: 'linear-gradient(135deg, #5b21b6, #8b5cf6)' }, // Púrpuras
+            { main: '#111827', grad: 'linear-gradient(135deg, #1f2937, #4b5563)' }  // Pizarras oscuros
+        ];
         
-        // Asignación de iconos dinámicos según palabras clave en la categoría
         function getIconForCategory(category) {
             const cat = (category || "").toLowerCase();
             if (cat.includes('transporte') || cat.includes('comunicación')) return '<i class="fas fa-route"></i>';
@@ -161,15 +208,14 @@
             if (cat.includes('industria') || cat.includes('economía')) return '<i class="fas fa-industry"></i>';
             if (cat.includes('política') || cat.includes('gobierno')) return '<i class="fas fa-landmark"></i>';
             if (cat.includes('educación')) return '<i class="fas fa-book"></i>';
-            return '<i class="fas fa-calendar-alt"></i>'; // Icono por defecto
+            return '<i class="fas fa-calendar-check"></i>'; 
         }
 
-        // 1. Cargar y leer el archivo Excel automáticamente
         fetch('Cronologías.xlsx')
             .then(res => res.arrayBuffer())
             .then(data => {
                 const workbook = XLSX.read(data, {type: 'array'});
-                const sheet = workbook.Sheets[workbook.SheetNames[0]]; // Lee la primera hoja
+                const sheet = workbook.Sheets[workbook.SheetNames[0]]; 
                 const jsonData = XLSX.utils.sheet_to_json(sheet);
                 
                 document.getElementById('loading').style.display = 'none';
@@ -177,7 +223,7 @@
                 initTimeline(jsonData);
             })
             .catch(err => {
-                document.getElementById('loading').innerHTML = "Error al cargar <b>Cronologías.xlsx</b>. Verifica que el archivo esté subido al repositorio.";
+                document.getElementById('loading').innerHTML = "Error al cargar <b>Cronologías.xlsx</b>.";
                 console.error(err);
             });
 
@@ -191,44 +237,42 @@
             data.forEach((row, index) => {
                 if (!row['Año']) return;
                 
-                // Configurar Localidades (Eje Vertical)
                 const loc = row['Localidad'] ? row['Localidad'].toString().trim() : 'General';
                 if (!groupsMap.has(loc)) {
-                    const bgColor = palette[(groupIdCounter - 1) % palette.length];
+                    const colorSet = premiumPalette[(groupIdCounter - 1) % premiumPalette.length];
                     groupsMap.set(loc, groupIdCounter);
                     groups.add({
                         id: groupIdCounter,
                         content: loc,
-                        style: `color: ${bgColor}; font-weight: 700; font-size: 14px; border-left: 4px solid ${bgColor}; padding-left: 8px;`
+                        // Estilo elegante para el nombre de la localidad
+                        style: `color: ${colorSet.main}; border-left: 5px solid ${colorSet.main}; padding-left: 12px; font-weight: 600; background: linear-gradient(90deg, rgba(0,0,0,0.03) 0%, transparent 100%);`
                     });
                     groupIdCounter++;
                 }
                 const groupId = groupsMap.get(loc);
 
-                // Configurar Años y Periodos temporales
                 const anio = row['Año'].toString().trim();
                 let start, end = null, type = 'point';
                 if (anio.includes('-')) {
                     const parts = anio.split('-');
                     start = parts[0].trim() + '-01-01';
                     end = parts[1].trim() + '-12-31';
-                    type = 'range'; // Barra
+                    type = 'range'; 
                 } else {
-                    start = anio + '-01-01'; // Punto
+                    start = anio + '-01-01'; 
                 }
 
-                // Extraer la primera oración de la descripción
                 const fullDesc = row['Descripción'] ? row['Descripción'].toString() : 'Sin descripción.';
                 const dotIndex = fullDesc.indexOf('.');
                 const firstSentence = dotIndex > -1 ? fullDesc.substring(0, dotIndex + 1) : fullDesc;
                 const cat = row['Categoría'] ? row['Categoría'].toString() : 'Evento';
                 const itemId = index + 1;
                 
-                // Aplicar colores y estilos al punto/barra
-                const groupColor = palette[(groupId - 1) % palette.length];
+                const colorSet = premiumPalette[(groupId - 1) % premiumPalette.length];
+                // Barras con gradientes sofisticados, puntos con borde elegante
                 const itemStyle = type === 'range' 
-                    ? `background-color: ${groupColor}; color: white; border: none;` 
-                    : `color: ${groupColor}; background: white; border: 2px solid ${groupColor};`;
+                    ? `background: ${colorSet.grad}; color: white; border: none;` 
+                    : `color: ${colorSet.main}; background: white; border: 3px solid ${colorSet.main}; border-radius: 50%; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);`;
 
                 items.add({
                     id: itemId,
@@ -240,7 +284,6 @@
                     style: itemStyle
                 });
 
-                // Almacenar datos para el Pop-up interactivo
                 tooltipData[itemId] = {
                     firstSentence: firstSentence,
                     fullDesc: fullDesc,
@@ -250,26 +293,34 @@
                 };
             });
 
-            // Configuración del comportamiento del Timeline
             const container = document.getElementById('timeline');
             const options = {
-                orientation: 'top',      // Años en la parte superior
-                zoomable: true,          // Permite Zoom
-                moveable: true,          // Permite desplazamiento
-                stack: true,             // Evita que los eventos se superpongan
-                margin: { item: 10, axis: 15 },
-                tooltip: { followMouse: false } // Desactivamos el tooltip nativo para usar el nuestro
+                // 1. Opciones de inicio y fin (1750 a 2026)
+                start: '1750-01-01',
+                end: '2026-12-31',
+                // Límites máximos para que el usuario no se pierda en el año 5000 al hacer scroll
+                min: '1700-01-01',
+                max: '2050-01-01',
+                
+                // 2. Altura fija para que el scroll modifique años pero no desacomode filas
+                height: '650px',
+                
+                orientation: 'top',      
+                zoomable: true,          
+                moveable: true,          
+                stack: true,             
+                margin: { item: 15, axis: 25 },
+                tooltip: { followMouse: false } 
             };
 
             const timeline = new vis.Timeline(container, items, groups, options);
 
-            // --- Lógica del Pop-up con "Ver Más" ---
+            // Lógica del Pop-up interactivo (se mantiene igual pero estilizado)
             const tooltip = document.getElementById('custom-tooltip');
             const btnVerMas = document.getElementById('btn-ver-mas');
             const fullContent = document.getElementById('tooltip-full-content');
             let hoverTimeout;
 
-            // Mostrar al pasar el mouse (Hover)
             timeline.on('itemover', function (props) {
                 clearTimeout(hoverTimeout);
                 const data = tooltipData[props.item];
@@ -281,25 +332,22 @@
                 document.getElementById('tt-fuente').innerText = data.fuente;
                 document.getElementById('tt-pag').innerText = data.pag;
 
-                // Resetear el estado del botón
                 fullContent.style.display = 'none';
                 btnVerMas.style.display = 'block';
 
                 tooltip.style.display = 'block';
-                tooltip.style.left = (props.event.pageX + 20) + 'px';
-                tooltip.style.top = (props.event.pageY + 20) + 'px';
+                // Posicionar el tooltip inteligentemente
+                tooltip.style.left = (props.event.pageX + 15) + 'px';
+                tooltip.style.top = (props.event.pageY + 15) + 'px';
             });
 
-            // Ocultar al quitar el mouse con un ligero retraso
             timeline.on('itemout', function () {
                 hoverTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 250);
             });
 
-            // Mantener el tooltip abierto si el mouse entra en él
             tooltip.addEventListener('mouseenter', () => clearTimeout(hoverTimeout));
             tooltip.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
 
-            // Acción del botón "Ver más"
             btnVerMas.addEventListener('click', () => {
                 fullContent.style.display = 'block';
                 btnVerMas.style.display = 'none';
