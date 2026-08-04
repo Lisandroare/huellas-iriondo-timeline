@@ -1,4 +1,4 @@
-He eliminado todos los iconos y corregido el comportamiento del botón "Todas". Ahora el control de categorías funciona sin errores, y la interfaz es más limpia y clara.
+He modificado el código para que al abrir la página intente cargar automáticamente el archivo `CRONOLOGIAS FINAL.xlsx` desde el mismo directorio (usando fetch). Si no lo encuentra, muestra un mensaje para cargarlo manualmente. Así ya no es necesario subirlo cada vez, siempre que esté en el repositorio.
 
 ```html
 <!DOCTYPE html>
@@ -290,18 +290,18 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
 <div id="container">
     <h1>
         🕰️ Línea de Tiempo
-        <span>📂 Carga tu Excel</span>
+        <span>📂 Archivo cargado automáticamente</span>
     </h1>
     <div class="controls">
         <div class="filter-group" id="filterGroup"></div>
         <button class="btn-reset" id="resetZoomBtn">⟲ Restablecer zoom</button>
         <label class="file-upload" style="background:#e9edf2; padding:6px 16px; border-radius:30px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px;">
-            📂 Cargar archivo
+            📂 Cargar otro archivo
             <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;" />
         </label>
     </div>
     <div id="vis">
-        <div class="loading" id="loadingMsg">Cargue un archivo Excel para visualizar la línea de tiempo.</div>
+        <div class="loading" id="loadingMsg">Cargando archivo automáticamente...</div>
     </div>
     <div id="legendContainer" class="legend"></div>
     <div class="footer-note">Desplácese con el mouse para hacer zoom horizontal · Use el botón para reiniciar</div>
@@ -535,7 +535,6 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
                         end = num; } else continue;
                 }
                 if (start < 1000 || end > 2100) continue;
-                // Si la categoría está vacía, asignar "Sin categoría"
                 const categoria = cat || 'Sin categoría';
                 events.push({ start, end, localidad, desc, categoria, fuente, pagina, url });
             }
@@ -580,7 +579,6 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
                 .attr('height', height)
                 .style('overflow', 'visible');
 
-            // Clip path
             const clipId = 'clip-' + Date.now();
             svg.append('defs')
                 .append('clipPath')
@@ -595,7 +593,6 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
                 .attr('class', 'chart-group')
                 .attr('clip-path', `url(#${clipId})`);
 
-            // Fondo
             chartGroup.append('rect')
                 .attr('x', margin.left)
                 .attr('y', margin.top)
@@ -629,7 +626,6 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
                     .attr('stroke-dasharray', '4,4');
             });
 
-            // Eje X
             const xAxis = d3.axisBottom(xScale)
                 .tickFormat(d3.format('d'))
                 .ticks(Math.min(20, (maxYear - minYear) / 2));
@@ -641,7 +637,6 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
                 .style('font-size', '11px')
                 .style('color', '#475569');
 
-            // Eje Y
             const yAxis = d3.axisLeft(yScale)
                 .tickSize(0);
 
@@ -653,7 +648,6 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
                 .style('font-weight', '500')
                 .style('color', '#1e293b');
 
-            // Preparar datos
             const eventsByLoc = d3.group(filtered, d => d.localidad);
             const orderedEventsByLoc = new Map();
             localidades.forEach(loc => {
@@ -750,7 +744,6 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
 
             drawEvents(xScale);
 
-            // Zoom
             const zoom = d3.zoom()
                 .scaleExtent([0.5, 50])
                 .on('zoom', function(zoomEvent) {
@@ -766,7 +759,7 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
             zoomBehavior = zoom;
             currentXScale = xScale;
 
-            // ---- Leyenda sin iconos ----
+            // Leyenda
             const cats = [...new Set(filtered.map(e => e.categoria))];
             legendContainer.innerHTML = cats.map(cat => {
                 const color = getCategoryColor(cat);
@@ -776,7 +769,7 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
                         </div>`;
             }).join('');
 
-            // ---- Filtros sin iconos ----
+            // Filtros
             const allCats = [...new Set(events.map(e => e.categoria))];
             const allChecked = allCats.every(cat => activeCats.has(cat));
 
@@ -797,7 +790,6 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
 
             filterGroup.innerHTML = filterHtml;
 
-            // ---- Comportamiento "Todas" ----
             const selectAllCb = document.getElementById('selectAllCats');
             const allCheckboxes = filterGroup.querySelectorAll('input[type="checkbox"]:not(#selectAllCats)');
 
@@ -820,9 +812,7 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
                             activeCategories.delete(cat);
                         }
                     });
-                    // Si se desmarcan todas, forzamos a que se activen todas (para evitar estado vacío)
                     if (!checked) {
-                        // Activar todas
                         activeCategories = new Set(allCats);
                         allCheckboxes.forEach(cb => {
                             cb.checked = true;
@@ -833,7 +823,6 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
                 });
             }
 
-            // Eventos individuales
             allCheckboxes.forEach(cb => {
                 cb.addEventListener('change', function() {
                     const cat = this.value;
@@ -842,9 +831,7 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
                     } else {
                         activeCategories.delete(cat);
                     }
-                    // Actualizar "Todas"
                     updateSelectAllState();
-                    // Si no hay ninguna activa, forzar todas
                     if (activeCategories.size === 0) {
                         activeCategories = new Set(allCats);
                         allCheckboxes.forEach(c => c.checked = true);
@@ -854,11 +841,70 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
                 });
             });
 
-            // Sincronizar estado inicial
             updateSelectAllState();
-
             svg.attr('height', height);
         }
+
+        // ---- Carga desde archivo (fetch o input) ----
+        function loadFromArrayBuffer(arrayBuffer) {
+            try {
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                let sheetName = 'Cronologica de detalle';
+                let sheet = workbook.Sheets[sheetName];
+                if (!sheet) {
+                    sheetName = workbook.SheetNames[0];
+                    sheet = workbook.Sheets[sheetName];
+                }
+                if (!sheet) {
+                    visDiv.innerHTML = '<div class="loading">No se encontraron hojas en el archivo.</div>';
+                    return;
+                }
+                const events = parseEventsFromSheet(sheet);
+                if (events.length === 0) {
+                    visDiv.innerHTML = '<div class="loading">No se pudieron extraer eventos válidos.</div>';
+                    legendContainer.innerHTML = '';
+                    filterGroup.innerHTML = '';
+                    return;
+                }
+                allEvents = events;
+                activeCategories = new Set(events.map(e => e.categoria));
+                render(events, activeCategories);
+                // Ocultar mensaje de carga
+                loadingMsg.textContent = '';
+            } catch (err) {
+                console.error(err);
+                visDiv.innerHTML = `<div class="loading">Error al leer el archivo: ${err.message}</div>`;
+            }
+        }
+
+        // ---- Carga automática desde el mismo directorio ----
+        function loadDefaultFile() {
+            const url = 'CRONOLOGIAS FINAL.xlsx';
+            loadingMsg.textContent = 'Cargando archivo automáticamente...';
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.arrayBuffer();
+                })
+                .then(arrayBuffer => {
+                    loadFromArrayBuffer(arrayBuffer);
+                })
+                .catch(err => {
+                    console.warn('No se pudo cargar el archivo por defecto:', err);
+                    loadingMsg.innerHTML = 'No se encontró el archivo "CRONOLOGIAS FINAL.xlsx" en el mismo directorio. Por favor, cárguelo manualmente.';
+                });
+        }
+
+        // ---- Evento input file ----
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(loadEvent) {
+                loadFromArrayBuffer(loadEvent.target.result);
+            };
+            reader.readAsArrayBuffer(file);
+        });
 
         // ---- Reset zoom ----
         resetZoomBtn.addEventListener('click', function() {
@@ -867,45 +913,8 @@ He eliminado todos los iconos y corregido el comportamiento del botón "Todas". 
             }
         });
 
-        // ---- Carga de archivo ----
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(loadEvent) {
-                try {
-                    const data = new Uint8Array(loadEvent.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    let sheetName = 'Cronologica de detalle';
-                    let sheet = workbook.Sheets[sheetName];
-                    if (!sheet) {
-                        sheetName = workbook.SheetNames[0];
-                        sheet = workbook.Sheets[sheetName];
-                    }
-                    if (!sheet) {
-                        visDiv.innerHTML = '<div class="loading">No se encontraron hojas en el archivo.</div>';
-                        return;
-                    }
-                    const events = parseEventsFromSheet(sheet);
-                    if (events.length === 0) {
-                        visDiv.innerHTML = '<div class="loading">No se pudieron extraer eventos válidos.</div>';
-                        legendContainer.innerHTML = '';
-                        filterGroup.innerHTML = '';
-                        return;
-                    }
-                    allEvents = events;
-                    activeCategories = new Set(events.map(e => e.categoria));
-                    render(events, activeCategories);
-                } catch (err) {
-                    console.error(err);
-                    visDiv.innerHTML = `<div class="loading">Error al leer el archivo: ${err.message}</div>`;
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        });
-
-        // Inicial
-        loadingMsg.textContent = 'Cargue un archivo Excel para visualizar la línea de tiempo.';
+        // ---- Inicial ----
+        loadDefaultFile();
 
         window.addEventListener('resize', function() {
             if (allEvents.length) {
