@@ -1,609 +1,677 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cronología Histórica Interactiva</title>
-    
-    <!-- Fuentes modernas (Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Iconos de FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Estilos de Vis-Timeline -->
-    <link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
-    
+    <!-- Fuente e iconos -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <!-- Vis-Timeline -->
+    <link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" />
     <style>
-        :root {
-            --bg-canvas: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-
         body {
             font-family: 'Inter', sans-serif;
-            margin: 0;
+            background: #f1f5f9;
+            color: #0b1e33;
             padding: 24px;
-            background-color: var(--bg-canvas);
-            color: var(--text-main);
+            min-height: 100vh;
         }
-
-        .header-container {
-            max-width: 1400px;
-            margin: 0 auto 20px auto;
+        .app-wrapper {
+            max-width: 1440px;
+            margin: 0 auto;
         }
-
         h1 {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 700;
-            color: var(--text-main);
-            margin: 0 0 16px 0;
+            letter-spacing: -0.5px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h1 i {
+            color: #3b82f6;
         }
 
-        /* ============================
-           Panel de Filtros (Categorías)
-           ============================ */
+        /* Panel de filtros */
         .controls-panel {
-            background: var(--card-bg);
-            padding: 16px 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            background: #ffffff;
+            padding: 14px 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            border: 1px solid #e2e8f0;
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 10px 16px;
+            margin-bottom: 22px;
         }
-
         .filter-title {
             font-size: 13px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            margin-right: 8px;
+            letter-spacing: 0.4px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
         .filter-btn {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 14px;
-            border-radius: 20px;
-            border: 1.5px solid var(--border-color);
-            background-color: #ffffff;
-            color: var(--text-muted);
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: 1.5px solid #e2e8f0;
+            background: #fff;
             font-size: 13px;
             font-weight: 500;
+            color: #475569;
             cursor: pointer;
-            transition: all 0.2s ease;
-            user-select: none;
+            transition: all 0.2s;
+            font-family: inherit;
         }
-
         .filter-btn:hover {
-            border-color: #cbd5e1;
+            border-color: #94a3b8;
             transform: translateY(-1px);
         }
-
         .filter-btn.active {
-            background-color: var(--cat-color, #2563eb);
-            border-color: var(--cat-color, #2563eb);
-            color: #ffffff;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+            background-color: var(--cat-color, #3b82f6);
+            border-color: var(--cat-color, #3b82f6);
+            color: #fff;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
         }
-
         .filter-btn-all {
             border-color: #94a3b8;
-            color: var(--text-main);
             font-weight: 600;
         }
         .filter-btn-all.active {
             background-color: #334155;
             border-color: #334155;
-            color: #ffffff;
+            color: #fff;
         }
 
-        /* ============================
-           Línea de Tiempo y Estilos Eje
-           ============================ */
-        #visualization {
-            width: 100%;
-            height: 75vh;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            background: var(--card-bg);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        /* Contenedor de la línea de tiempo */
+        #timeline-container {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.04);
             overflow: hidden;
+            height: 78vh;
+            min-height: 480px;
+            position: relative;
+        }
+        #timeline {
+            width: 100%;
+            height: 100%;
         }
 
-        /* Eje Y: Localidades fijas (Altura reducida) */
-        .vis-labelset .vis-label {
-            height: 44px !important;
-            line-height: 44px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-main);
-            border-bottom: 1px solid #f1f5f9;
-            box-sizing: border-box;
+        /* Ajustes de vis-timeline */
+        .vis-label {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #1e293b !important;
             padding: 0 16px !important;
-            display: flex;
-            align-items: center;
+            border-bottom: 1px solid #f1f5f9 !important;
         }
         .vis-group {
             height: 44px !important;
-            border-bottom: 1px solid #f8fafc;
+            border-bottom: 1px solid #f8fafc !important;
         }
-
-        /* Eje X: Años */
         .vis-time-axis .vis-text {
             font-weight: 600;
             color: #475569;
-            font-size: 13px;
+            font-size: 12px;
         }
 
-        /* ============================
-           Tamaño y Diseño de los Puntos (Más chicos)
-           ============================ */
+        /* Ítems: puntos y rangos */
         .vis-item {
             cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            transition: transform 0.15s, box-shadow 0.15s;
             border-width: 2px !important;
-            background-color: #ffffff;
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        
         .vis-item:hover {
-            transform: scale(1.15) translateY(-1px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-            z-index: 999 !important;
+            transform: scale(1.18);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+            z-index: 10;
         }
-
-        /* PUNTOS INDIVIDUALES (Círculos achicados) */
         .vis-item.vis-box {
             border-radius: 50% !important;
-            width: 26px !important;
-            height: 26px !important;
+            width: 28px !important;
+            height: 28px !important;
             padding: 0 !important;
         }
-
-        /* RANGOS DE TIEMPO (Barras achicadas) */
         .vis-item.vis-range {
             border-radius: 8px;
-            height: 26px;
-            opacity: 0.95;
-            padding: 0 8px;
+            height: 28px;
+            opacity: 0.92;
+            padding: 0 10px;
         }
         .vis-item.vis-range .vis-item-content {
-            color: #ffffff !important;
+            color: #fff !important;
+            font-weight: 500;
+            font-size: 12px;
         }
-
-        /* Ícono en el interior */
         .vis-item-content {
-            padding: 0;
-            font-size: 12px; /* Ícono más proporcionado */
+            font-size: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             width: 100%;
             height: 100%;
         }
-
-        /* ============================
-           Pop-up Original (Hover - V1)
-           ============================ */
-        #timeline-tooltip {
-            position: absolute;
-            display: none;
-            width: 320px;
-            background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.2);
-            padding: 20px;
-            z-index: 1000;
-            border: 1px solid #eaeaea;
+        .vis-item .vis-item-content i {
             font-size: 14px;
-            pointer-events: auto;
         }
-        .tt-header {
+
+        /* Loader */
+        #loader {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-            font-weight: 600;
-            color: #2c3e50;
-            border-bottom: 1px solid #f0f0f0;
-            padding-bottom: 10px;
-        }
-        .tt-first-sentence {
-            margin: 0 0 15px 0;
-            line-height: 1.6;
-            color: #444;
-        }
-        .btn-more {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 13px;
-            font-weight: 600;
-            transition: background 0.2s;
-            width: 100%;
-            display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 8px;
+            height: 100%;
+            font-size: 16px;
+            color: #64748b;
+            gap: 12px;
         }
-        .btn-more:hover {
-            background-color: #2980b9;
+        #loader .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
-        .tt-full-content {
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* MODAL */
+        .modal-overlay {
             display: none;
-            margin-top: 15px;
-            border-top: 1px dashed #dcdcdc;
-            padding-top: 15px;
-            animation: fadeIn 0.3s ease;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.40);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.2s ease;
         }
-        .tt-full-text {
-            margin: 0 0 15px 0;
-            line-height: 1.6;
-            color: #555;
-            max-height: 200px;
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-card {
+            background: #fff;
+            max-width: 560px;
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+            padding: 28px 32px;
+            position: relative;
+            max-height: 90vh;
             overflow-y: auto;
+            animation: slideUp 0.25s ease;
         }
-        .tt-meta {
-            font-size: 12px;
-            color: #7f8c8d;
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 6px;
-            line-height: 1.6;
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: color 0.2s;
+            line-height: 1;
         }
-        .tt-meta strong {
-            color: #34495e;
+        .modal-close:hover {
+            color: #1e293b;
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 14px;
+        }
+        .modal-header .cat-icon {
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .modal-header .cat-name {
+            font-weight: 700;
+            font-size: 20px;
+            color: #0b1e33;
+        }
+        .modal-body {
+            margin: 12px 0 20px 0;
+        }
+        .modal-body .full-text {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #1e293b;
+            margin-bottom: 18px;
+        }
+        .modal-meta {
+            background: #f8fafc;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .modal-meta strong {
+            font-weight: 600;
+            color: #0b1e33;
+        }
+        .modal-meta span {
+            display: block;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        #loader {
-            text-align: center;
-            padding: 60px;
-            font-size: 16px;
-            color: var(--text-muted);
+        /* Responsive */
+        @media (max-width: 640px) {
+            body { padding: 12px; }
+            .controls-panel { padding: 12px 16px; }
+            .filter-btn { padding: 5px 12px; font-size: 12px; }
+            .modal-card { padding: 20px; }
+            .modal-header .cat-name { font-size: 18px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <h1>Cronología Histórica Interactiva</h1>
-        
-        <div class="controls-panel" id="controls-panel">
-            <span class="filter-title"><i class="fas fa-filter"></i> Categorías:</span>
-            <button class="filter-btn filter-btn-all active" id="btn-toggle-all">
+<div class="app-wrapper">
+    <h1><i class="fas fa-timeline"></i> Cronología Histórica</h1>
+
+    <!-- Panel de filtros -->
+    <div class="controls-panel" id="controls">
+        <span class="filter-title"><i class="fas fa-filter"></i> Categorías</span>
+        <div class="filter-group" id="filterGroup">
+            <button class="filter-btn filter-btn-all active" id="btnAll" data-key="__all__">
                 <i class="fas fa-layer-group"></i> Todas
             </button>
-            <div id="category-filters-container" style="display: contents;"></div>
         </div>
     </div>
 
-    <div id="loader">Cargando datos desde CSV... <i class="fas fa-spinner fa-spin"></i></div>
-    <div id="visualization" style="display:none;"></div>
-
-    <!-- Pop-up Interactivo (V1 Hover) -->
-    <div id="timeline-tooltip">
-        <div class="tt-header">
-            <i id="tt-icon" class="fas fa-circle"></i>
-            <span id="tt-category">Categoría</span>
+    <!-- Línea de tiempo -->
+    <div id="timeline-container">
+        <div id="loader">
+            <div class="spinner"></div>
+            Cargando datos…
         </div>
-        <p class="tt-first-sentence" id="tt-first-sentence"></p>
-        <button class="btn-more" id="tt-btn-more">Ver más <i class="fas fa-chevron-down"></i></button>
-        
-        <div class="tt-full-content" id="tt-full-content">
-            <p class="tt-full-text" id="tt-full-text"></p>
-            <div class="tt-meta">
-                <div><strong>Fuente:</strong> <span id="tt-fuente"></span></div>
-                <div><strong>Página:</strong> <span id="tt-pag"></span></div>
+        <div id="timeline" style="display:none;"></div>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+        <button class="modal-close" id="modalClose">&times;</button>
+        <div class="modal-header">
+            <div class="cat-icon" id="modalIcon" style="background:#3b82f6;"><i class="fas fa-bookmark"></i></div>
+            <div class="cat-name" id="modalCategory">Categoría</div>
+        </div>
+        <div class="modal-body">
+            <p class="full-text" id="modalFullText"></p>
+            <div class="modal-meta">
+                <span><strong>Fuente:</strong> <span id="modalFuente"></span></span>
+                <span><strong>Página:</strong> <span id="modalPag"></span></span>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Carga de Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
 
-    <script>
-        const fileUrl = "CRONOLOGIAS FINAL.csv";
+<script>
+    (function() {
+        // ---------- CONFIGURACIÓN ----------
+        const CSV_URL = "CRONOLOGIAS FINAL.csv";
 
-        // Mapeador gráfico para categorías
-        function getCategoryInfo(rawCat) {
-            const cat = (rawCat || "").toLowerCase();
-            
-            if (cat.includes("transporte") || cat.includes("comunicacion")) {
-                return { raw: rawCat, label: "Transporte y Comunicaciones", color: "#2563eb", icon: "fas fa-bus" };
+        // ---------- ESTADO ----------
+        let timeline = null;
+        let itemsDataSet = null;
+        let itemsView = null;
+        let allItems = [];
+        let activeCategories = new Set();
+        let categoryMap = new Map(); // rawKey -> { label, color, icon }
+
+        // ---------- DOM ----------
+        const loaderEl = document.getElementById('loader');
+        const timelineEl = document.getElementById('timeline');
+        const filterGroup = document.getElementById('filterGroup');
+        const btnAll = document.getElementById('btnAll');
+
+        // Modal
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalClose = document.getElementById('modalClose');
+        const modalIcon = document.getElementById('modalIcon');
+        const modalCategory = document.getElementById('modalCategory');
+        const modalFullText = document.getElementById('modalFullText');
+        const modalFuente = document.getElementById('modalFuente');
+        const modalPag = document.getElementById('modalPag');
+
+        // ---------- UTILIDADES ----------
+        function getCategoryInfo(raw) {
+            const c = (raw || "").toLowerCase();
+            if (c.includes("transporte") || c.includes("comunicacion")) {
+                return { label: "Transporte y Comunicaciones", color: "#2563eb", icon: "fa-bus" };
             }
-            if (cat.includes("energía") || cat.includes("energia")) {
-                return { raw: rawCat, label: "Energía", color: "#d97706", icon: "fas fa-bolt" };
+            if (c.includes("energía") || c.includes("energia")) {
+                return { label: "Energía", color: "#d97706", icon: "fa-bolt" };
             }
-            if (cat.includes("infraestructura") || cat.includes("institucion")) {
-                return { raw: rawCat, label: "Infraestructura e Instituciones", color: "#7c3aed", icon: "fas fa-building" };
+            if (c.includes("infraestructura") || c.includes("institucion")) {
+                return { label: "Infraestructura e Instituciones", color: "#7c3aed", icon: "fa-building" };
             }
-            if (cat.includes("trabajo")) {
-                return { raw: rawCat, label: "Trabajo", color: "#059669", icon: "fas fa-hammer" };
+            if (c.includes("trabajo")) {
+                return { label: "Trabajo", color: "#059669", icon: "fa-hammer" };
             }
-            if (cat.includes("identidad") || cat.includes("celebración") || cat.includes("celebracion")) {
-                return { raw: rawCat, label: "Identidad y Celebración", color: "#dc2626", icon: "fas fa-star" };
+            if (c.includes("identidad") || c.includes("celebración") || c.includes("celebracion")) {
+                return { label: "Identidad y Celebración", color: "#dc2626", icon: "fa-star" };
             }
-            return { raw: rawCat, label: rawCat || "General", color: "#64748b", icon: "fas fa-bookmark" };
+            return { label: raw || "General", color: "#64748b", icon: "fa-bookmark" };
         }
 
         function getFirstSentence(text) {
             if (!text) return "";
-            let match = text.match(/(.*?[.!?])(?:\s|$)/);
-            return match ? match[1] : text;
+            const m = text.match(/(.*?[.!?])(?:\s|$)/);
+            return m ? m[1] : text;
         }
 
-        let timeline, itemsDataSet, itemsView;
-        let activeCategories = new Set();
-        let categoryMap = new Map();
-
-        fetch(fileUrl)
-            .then(response => {
-                if (!response.ok) throw new Error("No se encontró el archivo CSV");
-                return response.arrayBuffer();
-            })
-            .then(buffer => {
-                let decoder = new TextDecoder('iso-8859-1'); 
-                let csvText = decoder.decode(buffer);
-                
-                Papa.parse(csvText, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        document.getElementById('loader').style.display = 'none';
-                        document.getElementById('visualization').style.display = 'block';
-                        renderTimeline(results.data);
-                    }
-                });
-            })
-            .catch(err => {
-                document.getElementById('loader').innerHTML = `<strong>Error:</strong> ${err.message}`;
-            });
-
-        function renderTimeline(data) {
-            let groups = [];
-            let items = [];
-            let localidades = new Set();
-
-            data.forEach((row, index) => {
-                let year = (row.Año || "").trim();
-                let loc = (row.Localidad || "").trim();
-                let desc = (row.Descripción || "").trim();
-                let cat = (row.Categoría || "").trim();
-                let fuente = (row.Fuente || "").trim();
-                let pag = (row.Pag || "").trim();
-
-                if (!year || !loc) return;
-
-                if (!localidades.has(loc)) {
-                    localidades.add(loc);
-                    groups.push({ id: loc, content: loc });
-                }
-
-                let catInfo = getCategoryInfo(cat);
-                if (!categoryMap.has(catInfo.raw)) {
-                    categoryMap.set(catInfo.raw, catInfo);
-                    activeCategories.add(catInfo.raw);
-                }
-
-                let start, end = null, type = 'box';
-                if (year.includes('-')) {
-                    let parts = year.split('-');
-                    start = parts[0].trim() + '-01-01';
-                    end = parts[1].trim() + '-12-31';
-                    type = 'range'; 
-                } else {
-                    start = year + '-01-01';
-                    type = 'box'; 
-                }
-
-                let inlineStyle = type === 'range' 
-                    ? `background-color: ${catInfo.color}; border-color: ${catInfo.color};` 
-                    : `border-color: ${catInfo.color}; color: ${catInfo.color};`;
-
-                items.push({
-                    id: index,
-                    group: loc,
-                    start: start,
-                    end: end,
-                    type: type,
-                    content: `<div class="vis-item-content"><i class="${catInfo.icon}"></i></div>`,
-                    style: inlineStyle,
-                    customData: {
-                        rawCategory: catInfo.raw,
-                        firstSentence: getFirstSentence(desc),
-                        fullText: desc,
-                        categoryTitle: catInfo.label,
-                        categoryColor: catInfo.color,
-                        icon: catInfo.icon,
-                        source: fuente,
-                        page: pag
-                    }
-                });
-            });
-
-            itemsDataSet = new vis.DataSet(items);
-            let groupsDataSet = new vis.DataSet(groups);
-
-            itemsView = new vis.DataView(itemsDataSet, {
-                filter: function (item) {
-                    return activeCategories.has(item.customData.rawCategory);
-                }
-            });
-
-            buildFilterButtons();
-
-            let container = document.getElementById('visualization');
-            
-            let options = {
-                zoomable: true,
-                moveable: true,
-                orientation: 'top',
-                stack: true,
-                min: new Date(1770, 0, 1),
-                max: new Date(2027, 11, 31),
-                zoomMin: 1000 * 60 * 60 * 24 * 365,
-                format: {
-                    minorLabels: { millisecond:'YYYY', second:'YYYY', minute:'YYYY', hour:'YYYY', weekday:'YYYY', day:'YYYY', month:'YYYY', year:'YYYY' }
-                },
-                margin: { item: 12, axis: 18 },
-                tooltip: { followMouse: false }, // Se desactiva tooltip nativo
-                interaction: {
-                    hover: true // OBLIGATORIO para que funcione el evento 'itemover'
-                }
-            };
-
-            timeline = new vis.Timeline(container, itemsView, groupsDataSet, options);
-            setupHoverPopupV1();
-        }
-
-        // ============================
-        // Lógica de Filtros
-        // ============================
-        function buildFilterButtons() {
-            const container = document.getElementById('category-filters-container');
-            container.innerHTML = '';
+        // ---------- FILTROS ----------
+        function rebuildFilterButtons() {
+            // Limpiar excepto el botón "Todas"
+            const allBtn = document.getElementById('btnAll');
+            filterGroup.innerHTML = '';
+            filterGroup.appendChild(allBtn);
 
             categoryMap.forEach((info, rawKey) => {
                 const btn = document.createElement('button');
                 btn.className = 'filter-btn active';
+                btn.dataset.key = rawKey;
                 btn.style.setProperty('--cat-color', info.color);
-                btn.innerHTML = `<i class="${info.icon}"></i> ${info.label}`;
-                
-                btn.addEventListener('click', () => {
-                    if (activeCategories.has(rawKey)) {
-                        activeCategories.delete(rawKey);
-                        btn.classList.remove('active');
-                    } else {
-                        activeCategories.add(rawKey);
-                        btn.classList.add('active');
-                    }
-                    updateAllButtonState();
-                    itemsView.refresh();
-                });
-                container.appendChild(btn);
+                btn.innerHTML = `<i class="fas ${info.icon}"></i> ${info.label}`;
+                btn.addEventListener('click', () => toggleCategory(rawKey, btn));
+                filterGroup.appendChild(btn);
             });
+            // Actualizar estado visual
+            updateAllButtonState();
+        }
 
-            const btnAll = document.getElementById('btn-toggle-all');
-            btnAll.addEventListener('click', () => {
-                const allActive = activeCategories.size === categoryMap.size;
-                const buttons = container.querySelectorAll('.filter-btn');
-
-                if (allActive) {
-                    activeCategories.clear();
-                    buttons.forEach(b => b.classList.remove('active'));
-                    btnAll.classList.remove('active');
-                } else {
-                    categoryMap.forEach((_, key) => activeCategories.add(key));
-                    buttons.forEach(b => b.classList.add('active'));
-                    btnAll.classList.add('active');
-                }
-                itemsView.refresh();
-            });
+        function toggleCategory(rawKey, btn) {
+            if (activeCategories.has(rawKey)) {
+                activeCategories.delete(rawKey);
+                btn.classList.remove('active');
+            } else {
+                activeCategories.add(rawKey);
+                btn.classList.add('active');
+            }
+            updateAllButtonState();
+            refreshView();
         }
 
         function updateAllButtonState() {
-            const btnAll = document.getElementById('btn-toggle-all');
-            if (activeCategories.size === categoryMap.size) {
+            const total = categoryMap.size;
+            const active = activeCategories.size;
+            if (total === 0) {
+                btnAll.classList.add('active');
+                return;
+            }
+            if (active === total) {
                 btnAll.classList.add('active');
             } else {
                 btnAll.classList.remove('active');
             }
         }
 
-        // ============================
-        // Lógica del Pop-up (HOVER V1)
-        // ============================
-        function setupHoverPopupV1() {
-            let hideTimeout;
-            const tooltip = document.getElementById('timeline-tooltip');
-            
-            const ttIcon = document.getElementById('tt-icon');
-            const ttCategory = document.getElementById('tt-category');
-            const ttFirstSentence = document.getElementById('tt-first-sentence');
-            const ttFullText = document.getElementById('tt-full-text');
-            const ttFuente = document.getElementById('tt-fuente');
-            const ttPag = document.getElementById('tt-pag');
-            const btnMore = document.getElementById('tt-btn-more');
-            const fullContent = document.getElementById('tt-full-content');
+        function refreshView() {
+            if (itemsView) itemsView.refresh();
+        }
 
-            timeline.on('itemover', function (props) {
-                clearTimeout(hideTimeout);
-                
-                let item = itemsDataSet.get(props.item);
-                if (!item || !item.customData) return;
+        // ---------- CARGA Y RENDER ----------
+        function renderTimeline(data) {
+            const groups = [];
+            const items = [];
+            const localidades = new Set();
+            categoryMap.clear();
+            activeCategories.clear();
 
-                // Llenar contenido
-                ttIcon.className = item.customData.icon;
-                ttCategory.innerText = item.customData.categoryTitle || "General";
-                ttCategory.style.color = item.customData.categoryColor;
-                ttIcon.style.color = item.customData.categoryColor;
-                
-                ttFirstSentence.innerText = item.customData.firstSentence;
-                ttFullText.innerText = item.customData.fullText;
-                ttFuente.innerText = item.customData.source || "S/D";
-                ttPag.innerText = item.customData.page || "S/D";
+            data.forEach((row, idx) => {
+                const year = (row.Año || "").trim();
+                const loc = (row.Localidad || "").trim();
+                const desc = (row.Descripción || "").trim();
+                const catRaw = (row.Categoría || "").trim();
+                const fuente = (row.Fuente || "").trim();
+                const pag = (row.Pag || "").trim();
 
-                // Resetear estado
-                fullContent.style.display = 'none';
-                btnMore.style.display = 'flex';
+                if (!year || !loc) return;
 
-                // Captura segura de coordenadas del mouse
-                let mouseX = props.event.pageX !== undefined ? props.event.pageX : props.event.clientX + window.scrollX;
-                let mouseY = props.event.pageY !== undefined ? props.event.pageY : props.event.clientY + window.scrollY;
-
-                tooltip.style.display = 'block'; 
-                let ttRect = tooltip.getBoundingClientRect();
-                
-                let topPos = mouseY + 15;
-                let leftPos = mouseX + 15;
-                
-                // Evitar que el tooltip se salga de la pantalla por la derecha
-                if (leftPos + ttRect.width > window.innerWidth) {
-                    leftPos = mouseX - ttRect.width - 15;
+                // Grupo
+                if (!localidades.has(loc)) {
+                    localidades.add(loc);
+                    groups.push({ id: loc, content: loc });
                 }
-                
-                tooltip.style.left = leftPos + 'px';
-                tooltip.style.top = topPos + 'px';
+
+                // Info categoría
+                const info = getCategoryInfo(catRaw);
+                const rawKey = catRaw || "General";
+                if (!categoryMap.has(rawKey)) {
+                    categoryMap.set(rawKey, info);
+                    activeCategories.add(rawKey);
+                }
+
+                // Fechas
+                let start, end = null, type = 'box';
+                if (year.includes('-')) {
+                    const parts = year.split('-');
+                    start = parts[0].trim() + '-01-01';
+                    end = parts[1].trim() + '-12-31';
+                    type = 'range';
+                } else {
+                    start = year + '-01-01';
+                    type = 'box';
+                }
+
+                const style = type === 'range'
+                    ? `background-color: ${info.color}; border-color: ${info.color};`
+                    : `border-color: ${info.color}; color: ${info.color};`;
+
+                // Texto para tooltip nativo (primera oración + categoría)
+                const first = getFirstSentence(desc);
+                const titleText = `${first} (${info.label})`;
+
+                items.push({
+                    id: idx,
+                    group: loc,
+                    start,
+                    end,
+                    type,
+                    content: `<i class="fas ${info.icon}"></i>`,
+                    style,
+                    title: titleText,  // tooltip nativo del navegador
+                    custom: {
+                        rawCategory: rawKey,
+                        categoryLabel: info.label,
+                        categoryColor: info.color,
+                        categoryIcon: info.icon,
+                        fullText: desc,
+                        source: fuente,
+                        page: pag,
+                        firstSentence: first
+                    }
+                });
             });
 
-            timeline.on('itemout', function () {
-                hideTimeout = setTimeout(() => { 
-                    tooltip.style.display = 'none'; 
-                }, 400); 
+            // Guardar todos los items para referencia
+            allItems = items;
+
+            // DataSet y DataView
+            itemsDataSet = new vis.DataSet(items);
+            itemsView = new vis.DataView(itemsDataSet, {
+                filter: (item) => activeCategories.has(item.custom.rawCategory)
             });
 
-            tooltip.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
-            tooltip.addEventListener('mouseleave', () => {
-                hideTimeout = setTimeout(() => { tooltip.style.display = 'none'; }, 300);
+            // Grupos
+            const groupsDataSet = new vis.DataSet(groups);
+
+            // Timeline
+            const container = document.getElementById('timeline');
+            const options = {
+                stack: true,
+                orientation: 'top',
+                zoomable: true,
+                moveable: true,
+                min: new Date(1770, 0, 1),
+                max: new Date(2027, 11, 31),
+                zoomMin: 1000 * 60 * 60 * 24 * 365, // 1 año mínimo
+                format: {
+                    minorLabels: { year: 'YYYY' }
+                },
+                margin: { item: 12, axis: 16 },
+                tooltip: {
+                    followMouse: true,
+                    overflowMethod: 'flip'
+                }
+            };
+
+            timeline = new vis.Timeline(container, itemsView, groupsDataSet, options);
+
+            // Evento click -> abrir modal
+            timeline.on('click', (props) => {
+                if (props.item) {
+                    const item = itemsDataSet.get(props.item);
+                    if (item && item.custom) {
+                        openModal(item.custom);
+                    }
+                }
             });
 
-            btnMore.addEventListener('click', () => {
-                fullContent.style.display = 'block';
-                btnMore.style.display = 'none';
+            // Mostrar timeline
+            timelineEl.style.display = 'block';
+            loaderEl.style.display = 'none';
+
+            // Construir botones de filtro
+            rebuildFilterButtons();
+
+            // Ajustar el botón "Todas"
+            btnAll.addEventListener('click', () => {
+                const allActive = activeCategories.size === categoryMap.size;
+                const btns = filterGroup.querySelectorAll('.filter-btn:not(#btnAll)');
+                if (allActive) {
+                    activeCategories.clear();
+                    btns.forEach(b => b.classList.remove('active'));
+                    btnAll.classList.remove('active');
+                } else {
+                    categoryMap.forEach((_, key) => activeCategories.add(key));
+                    btns.forEach(b => b.classList.add('active'));
+                    btnAll.classList.add('active');
+                }
+                refreshView();
             });
         }
-    </script>
+
+        // ---------- MODAL ----------
+        function openModal(custom) {
+            const icon = custom.categoryIcon || 'fa-bookmark';
+            const color = custom.categoryColor || '#64748b';
+            modalIcon.style.background = color;
+            modalIcon.innerHTML = `<i class="fas ${icon}"></i>`;
+            modalCategory.textContent = custom.categoryLabel || 'General';
+            modalFullText.textContent = custom.fullText || 'Sin descripción';
+            modalFuente.textContent = custom.source || 'S/D';
+            modalPag.textContent = custom.page || 'S/D';
+            modalOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // Eventos del modal
+        modalClose.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // ---------- CARGA DEL CSV ----------
+        function loadCSV() {
+            fetch(CSV_URL)
+                .then(res => {
+                    if (!res.ok) throw new Error(`No se pudo cargar ${CSV_URL}`);
+                    return res.arrayBuffer();
+                })
+                .then(buffer => {
+                    const decoder = new TextDecoder('iso-8859-1');
+                    const csvText = decoder.decode(buffer);
+                    Papa.parse(csvText, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: (result) => {
+                            if (result.data && result.data.length) {
+                                renderTimeline(result.data);
+                            } else {
+                                throw new Error('El CSV está vacío o mal formado');
+                            }
+                        },
+                        error: (err) => {
+                            throw err;
+                        }
+                    });
+                })
+                .catch(err => {
+                    loaderEl.innerHTML = `<span style="color:#b91c1c;font-weight:600;">⚠️ Error:</span> ${err.message}`;
+                });
+        }
+
+        // Iniciar
+        loadCSV();
+
+    })();
+</script>
 </body>
 </html>
