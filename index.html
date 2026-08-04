@@ -1,776 +1,921 @@
+He eliminado todos los iconos y corregido el comportamiento del botón "Todas". Ahora el control de categorías funciona sin errores, y la interfaz es más limpia y clara.
+
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cronología Histórica Interactiva</title>
-  <!-- Fuentes e iconos -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <!-- Vis-Timeline -->
-  <link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" />
-  <style>
-    /* ----- Reset & Base ----- */
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f6f9fc;
-      color: #0b1e33;
-      padding: 28px 20px;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-    }
-    .app {
-      max-width: 1440px;
-      width: 100%;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Línea de Tiempo Interactiva</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            background: #eef2f7;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        #container {
+            max-width: 1400px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 20, 40, 0.12);
+            padding: 24px 28px 20px;
+        }
+        h1 {
+            font-size: 26px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        h1 span {
+            background: #e9edf2;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 400;
+            color: #334155;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px 30px;
+            background: #f8fafc;
+            padding: 14px 20px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            border: 1px solid #e2e8f0;
+        }
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 20px;
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #1e293b;
+            cursor: pointer;
+            user-select: none;
+            padding: 4px 8px 4px 4px;
+            border-radius: 30px;
+            transition: background 0.15s;
+        }
+        .filter-item:hover {
+            background: #e9edf2;
+        }
+        .filter-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: currentColor;
+            cursor: pointer;
+        }
+        .color-dot {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .filter-all {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+            user-select: none;
+            padding: 4px 12px 4px 4px;
+            border-radius: 30px;
+            background: #e9edf2;
+            transition: background 0.15s;
+        }
+        .filter-all:hover {
+            background: #d1d9e6;
+        }
+        .filter-all input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #2563eb;
+            cursor: pointer;
+        }
+        .btn-reset {
+            background: #e9edf2;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            margin-left: auto;
+        }
+        .btn-reset:hover {
+            background: #d1d9e6;
+        }
+        .btn-reset:active {
+            transform: scale(0.96);
+        }
+        #vis {
+            width: 100%;
+            overflow: auto;
+            position: relative;
+            min-height: 500px;
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #eef2f7;
+        }
+        #vis svg {
+            display: block;
+            background: white;
+            border-radius: 12px;
+        }
+        .loading {
+            padding: 60px 20px;
+            text-align: center;
+            color: #64748b;
+            font-size: 16px;
+        }
+        .footer-note {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 14px;
+            text-align: center;
+        }
 
-    /* ----- Encabezado ----- */
-    .app-header {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-      gap: 16px;
-    }
-    .app-header h1 {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -0.4px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .app-header h1 i {
-      color: #3b82f6;
-      background: #e8f0fe;
-      padding: 10px;
-      border-radius: 14px;
-      font-size: 22px;
-    }
-    .app-header .subtitle {
-      font-size: 14px;
-      color: #64748b;
-      font-weight: 400;
-      margin-top: 4px;
-    }
-
-    /* ----- Panel de filtros ----- */
-    .filters {
-      background: #ffffff;
-      padding: 12px 20px;
-      border-radius: 16px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-      border: 1px solid #e9edf2;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 12px 20px;
-      margin-bottom: 24px;
-    }
-    .filters .label {
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #64748b;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .filter-group {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
-    .filter-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 16px;
-      border-radius: 40px;
-      border: 1.5px solid #dce1e8;
-      background: #ffffff;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 500;
-      color: #475569;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-    }
-    .filter-btn:hover {
-      border-color: #b0bcc9;
-      transform: translateY(-1px);
-    }
-    .filter-btn.active {
-      background-color: var(--cat-color, #3b82f6);
-      border-color: var(--cat-color, #3b82f6);
-      color: #ffffff;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-    }
-    .filter-btn-all {
-      border-color: #b0bcc9;
-      font-weight: 600;
-      color: #1e293b;
-    }
-    .filter-btn-all.active {
-      background-color: #1e293b;
-      border-color: #1e293b;
-      color: #ffffff;
-    }
-    .filter-btn-all.active:hover {
-      background-color: #0f172a;
-    }
-
-    /* ----- Contenedor de la línea de tiempo ----- */
-    .timeline-wrapper {
-      background: #ffffff;
-      border-radius: 18px;
-      border: 1px solid #e9edf2;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-      overflow: hidden;
-      height: 72vh;
-      min-height: 400px;
-      position: relative;
-    }
-    #timeline {
-      width: 100%;
-      height: 100%;
-    }
-
-    /* ----- Loader ----- */
-    .loader {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      color: #64748b;
-      font-size: 15px;
-      gap: 16px;
-    }
-    .loader .spinner {
-      width: 44px;
-      height: 44px;
-      border: 4px solid #e2e8f0;
-      border-top-color: #3b82f6;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    /* ----- Ajustes de vis-timeline ----- */
-    .vis-label {
-      font-size: 13px !important;
-      font-weight: 600 !important;
-      color: #1e293b !important;
-      padding: 0 16px !important;
-      border-bottom: 1px solid #f1f5f9 !important;
-    }
-    .vis-group {
-      height: 44px !important;
-      border-bottom: 1px solid #f8fafc !important;
-    }
-    .vis-time-axis .vis-text {
-      font-weight: 600;
-      color: #475569;
-      font-size: 12px;
-    }
-    .vis-time-axis .vis-grid {
-      border-color: #e9edf2;
-    }
-
-    /* Items (puntos y rangos) */
-    .vis-item {
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-      border-width: 2px !important;
-      background: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50% !important;
-      width: 30px !important;
-      height: 30px !important;
-      padding: 0 !important;
-    }
-    .vis-item.vis-range {
-      border-radius: 10px !important;
-      width: auto !important;
-      height: 28px !important;
-      padding: 0 12px !important;
-      opacity: 0.92;
-    }
-    .vis-item.vis-range .vis-item-content {
-      color: #ffffff !important;
-      font-weight: 500;
-      font-size: 12px;
-    }
-    .vis-item .vis-item-content {
-      font-size: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-    }
-    .vis-item:hover {
-      transform: scale(1.16);
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-      z-index: 10;
-    }
-
-    /* ----- Modal ----- */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(6px);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      animation: fadeIn 0.25s ease;
-    }
-    .modal-overlay.open {
-      display: flex;
-    }
-    .modal-card {
-      background: #ffffff;
-      max-width: 540px;
-      width: 100%;
-      border-radius: 24px;
-      box-shadow: 0 32px 64px rgba(0, 0, 0, 0.18);
-      padding: 32px 36px 28px;
-      position: relative;
-      max-height: 90vh;
-      overflow-y: auto;
-      animation: slideUp 0.3s ease;
-    }
-    .modal-close {
-      position: absolute;
-      top: 16px;
-      right: 20px;
-      background: none;
-      border: none;
-      font-size: 30px;
-      color: #94a3b8;
-      cursor: pointer;
-      transition: color 0.2s;
-      line-height: 1;
-    }
-    .modal-close:hover {
-      color: #1e293b;
-    }
-    .modal-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
-      border-bottom: 1px solid #f1f5f9;
-      padding-bottom: 16px;
-    }
-    .modal-header .icon-box {
-      width: 46px;
-      height: 46px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ffffff;
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-    .modal-header .cat-name {
-      font-weight: 700;
-      font-size: 20px;
-      color: #0b1e33;
-    }
-    .modal-body {
-      margin: 8px 0 20px;
-    }
-    .modal-body .full-text {
-      font-size: 15px;
-      line-height: 1.7;
-      color: #1e293b;
-      margin-bottom: 20px;
-    }
-    .modal-meta {
-      background: #f8fafc;
-      padding: 14px 18px;
-      border-radius: 12px;
-      font-size: 14px;
-      color: #334155;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .modal-meta strong {
-      font-weight: 600;
-      color: #0b1e33;
-    }
-    .modal-meta span {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(28px) scale(0.96);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    /* ----- Responsive ----- */
-    @media (max-width: 700px) {
-      body {
-        padding: 16px 12px;
-      }
-      .app-header h1 {
-        font-size: 22px;
-      }
-      .app-header h1 i {
-        font-size: 18px;
-        padding: 8px;
-      }
-      .filters {
-        padding: 10px 14px;
-        gap: 8px;
-      }
-      .filter-btn {
-        padding: 5px 12px;
-        font-size: 12px;
-      }
-      .modal-card {
-        padding: 24px 20px;
-      }
-      .modal-header .cat-name {
-        font-size: 18px;
-      }
-      .modal-body .full-text {
-        font-size: 14px;
-      }
-    }
-    @media (max-width: 480px) {
-      .timeline-wrapper {
-        height: 60vh;
-        min-height: 320px;
-      }
-      .vis-item {
-        width: 24px !important;
-        height: 24px !important;
-      }
-      .vis-item.vis-range {
-        height: 24px !important;
-        padding: 0 8px !important;
-        font-size: 10px;
-      }
-    }
-  </style>
+        /* Tooltip */
+        .tooltip {
+            position: fixed;
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 16px 18px;
+            max-width: 380px;
+            min-width: 220px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.18);
+            pointer-events: auto;
+            z-index: 10000;
+            display: none;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #1e293b;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .tooltip .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .tooltip .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 0 4px;
+            line-height: 1;
+        }
+        .tooltip .close-btn:hover {
+            color: #ef4444;
+        }
+        .tooltip .short .first-sentence {
+            font-weight: 500;
+            color: #0f172a;
+            margin-right: 10px;
+        }
+        .tooltip .btn-more {
+            background: #f1f5f9;
+            border: none;
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #1e293b;
+            cursor: pointer;
+            transition: background 0.15s;
+            margin-top: 6px;
+        }
+        .tooltip .btn-more:hover {
+            background: #e2e8f0;
+        }
+        .tooltip .full {
+            display: none;
+            margin-top: 10px;
+            border-top: 1px solid #e9edf2;
+            padding-top: 10px;
+        }
+        .tooltip .full.show {
+            display: block;
+        }
+        .tooltip .full-text {
+            font-size: 13px;
+            color: #334155;
+            margin-bottom: 8px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .tooltip .meta {
+            font-size: 12px;
+            color: #64748b;
+            border-top: 1px solid #e9edf2;
+            padding-top: 8px;
+            margin-top: 4px;
+        }
+        .tooltip .meta div {
+            margin-bottom: 2px;
+        }
+        .tooltip .meta a {
+            color: #2563eb;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        .tooltip .meta a:hover {
+            text-decoration: underline;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 20px;
+            padding: 12px 0 4px;
+            border-top: 1px solid #e9edf2;
+            margin-top: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #1e293b;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        #vis::-webkit-scrollbar {
+            height: 8px;
+        }
+        #vis::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        #vis::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        #vis::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
 <body>
-  <div class="app">
-    <!-- Encabezado -->
-    <header class="app-header">
-      <div>
-        <h1><i class="fas fa-timeline"></i> Cronología Histórica</h1>
-        <div class="subtitle">Explora el pasado a través de una línea de tiempo interactiva</div>
-      </div>
-    </header>
 
-    <!-- Filtros -->
-    <div class="filters" id="filtersPanel">
-      <span class="label"><i class="fas fa-filter"></i> Categorías</span>
-      <div class="filter-group" id="filterGroup">
-        <button class="filter-btn filter-btn-all active" id="btnAll" data-key="__all__">
-          <i class="fas fa-layer-group"></i> Todas
-        </button>
-      </div>
+<div id="container">
+    <h1>
+        🕰️ Línea de Tiempo
+        <span>📂 Carga tu Excel</span>
+    </h1>
+    <div class="controls">
+        <div class="filter-group" id="filterGroup"></div>
+        <button class="btn-reset" id="resetZoomBtn">⟲ Restablecer zoom</button>
+        <label class="file-upload" style="background:#e9edf2; padding:6px 16px; border-radius:30px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+            📂 Cargar archivo
+            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;" />
+        </label>
     </div>
-
-    <!-- Línea de tiempo -->
-    <div class="timeline-wrapper">
-      <div class="loader" id="loader">
-        <div class="spinner"></div>
-        <span>Cargando datos históricos…</span>
-      </div>
-      <div id="timeline" style="display:none;"></div>
+    <div id="vis">
+        <div class="loading" id="loadingMsg">Cargue un archivo Excel para visualizar la línea de tiempo.</div>
     </div>
-  </div>
+    <div id="legendContainer" class="legend"></div>
+    <div class="footer-note">Desplácese con el mouse para hacer zoom horizontal · Use el botón para reiniciar</div>
+</div>
 
-  <!-- Modal -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal-card">
-      <button class="modal-close" id="modalClose">&times;</button>
-      <div class="modal-header">
-        <div class="icon-box" id="modalIcon" style="background:#3b82f6;"><i class="fas fa-bookmark"></i></div>
-        <div class="cat-name" id="modalCategory">Categoría</div>
-      </div>
-      <div class="modal-body">
-        <p class="full-text" id="modalFullText"></p>
-        <div class="modal-meta">
-          <span><strong>Fuente:</strong> <span id="modalFuente"></span></span>
-          <span><strong>Página:</strong> <span id="modalPag"></span></span>
+<!-- Tooltip -->
+<div id="tooltip" class="tooltip">
+    <div class="header">
+        <div class="short">
+            <div class="first-sentence"></div>
+            <button class="btn-more" id="tooltipMore">Ver más</button>
         </div>
-      </div>
+        <button class="close-btn" id="tooltipClose">✕</button>
     </div>
-  </div>
+    <div class="full" id="tooltipFull">
+        <div class="full-text"></div>
+        <div class="meta">
+            <div><strong>Fuente:</strong> <span id="tooltipSource"></span></div>
+            <div><strong>Página:</strong> <span id="tooltipPage"></span></div>
+            <div><strong>Enlace:</strong> <span id="tooltipLink"></span></div>
+        </div>
+    </div>
+</div>
 
-  <!-- Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js">
-  </script>
-  <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js">
-  </script>
-
-  <script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
     (function() {
-      'use strict';
-
-      // ------------------------------------------------------------
-      //  CONFIGURACIÓN
-      // ------------------------------------------------------------
-      const CSV_URL = 'CRONOLOGIAS FINAL.csv';
-
-      // ------------------------------------------------------------
-      //  DOM REFS
-      // ------------------------------------------------------------
-      const loaderEl = document.getElementById('loader');
-      const timelineEl = document.getElementById('timeline');
-      const filterGroup = document.getElementById('filterGroup');
-      const btnAll = document.getElementById('btnAll');
-
-      const modalOverlay = document.getElementById('modalOverlay');
-      const modalClose = document.getElementById('modalClose');
-      const modalIcon = document.getElementById('modalIcon');
-      const modalCategory = document.getElementById('modalCategory');
-      const modalFullText = document.getElementById('modalFullText');
-      const modalFuente = document.getElementById('modalFuente');
-      const modalPag = document.getElementById('modalPag');
-
-      // ------------------------------------------------------------
-      //  ESTADO
-      // ------------------------------------------------------------
-      let timeline = null;
-      let itemsDataSet = null;
-      let itemsView = null;
-      let allItems = [];
-      let activeCategories = new Set();
-      let categoryMap = new Map(); // rawKey -> { label, color, icon }
-
-      // ------------------------------------------------------------
-      //  UTILIDADES
-      // ------------------------------------------------------------
-      function getCategoryInfo(raw) {
-        const c = (raw || '').toLowerCase();
-        if (c.includes('transporte') || c.includes('comunicacion')) {
-          return { label: 'Transporte y Comunicaciones', color: '#2563eb', icon: 'fa-bus' };
-        }
-        if (c.includes('energía') || c.includes('energia')) {
-          return { label: 'Energía', color: '#d97706', icon: 'fa-bolt' };
-        }
-        if (c.includes('infraestructura') || c.includes('institucion')) {
-          return { label: 'Infraestructura e Instituciones', color: '#7c3aed', icon: 'fa-building' };
-        }
-        if (c.includes('trabajo')) {
-          return { label: 'Trabajo', color: '#059669', icon: 'fa-hammer' };
-        }
-        if (c.includes('identidad') || c.includes('celebración') || c.includes('celebracion')) {
-          return { label: 'Identidad y Celebración', color: '#dc2626', icon: 'fa-star' };
-        }
-        return { label: raw || 'General', color: '#64748b', icon: 'fa-bookmark' };
-      }
-
-      function getFirstSentence(text) {
-        if (!text) return '';
-        const match = text.match(/(.*?[.!?])(?:\s|$)/);
-        return match ? match[1] : text;
-      }
-
-      // ------------------------------------------------------------
-      //  FILTROS
-      // ------------------------------------------------------------
-      function rebuildFilterButtons() {
-        // Conservar el botón "Todas"
-        const allBtn = document.getElementById('btnAll');
-        filterGroup.innerHTML = '';
-        filterGroup.appendChild(allBtn);
-
-        categoryMap.forEach((info, rawKey) => {
-          const btn = document.createElement('button');
-          btn.className = 'filter-btn active';
-          btn.dataset.key = rawKey;
-          btn.style.setProperty('--cat-color', info.color);
-          btn.innerHTML = `<i class="fas ${info.icon}"></i> ${info.label}`;
-          btn.addEventListener('click', () => toggleCategory(rawKey, btn));
-          filterGroup.appendChild(btn);
-        });
-
-        updateAllButtonState();
-      }
-
-      function toggleCategory(rawKey, btn) {
-        if (activeCategories.has(rawKey)) {
-          activeCategories.delete(rawKey);
-          btn.classList.remove('active');
-        } else {
-          activeCategories.add(rawKey);
-          btn.classList.add('active');
-        }
-        updateAllButtonState();
-        refreshView();
-      }
-
-      function updateAllButtonState() {
-        const total = categoryMap.size;
-        const active = activeCategories.size;
-        if (total === 0) {
-          btnAll.classList.add('active');
-          return;
-        }
-        if (active === total) {
-          btnAll.classList.add('active');
-        } else {
-          btnAll.classList.remove('active');
-        }
-      }
-
-      function refreshView() {
-        if (itemsView) itemsView.refresh();
-      }
-
-      // ------------------------------------------------------------
-      //  MODAL
-      // ------------------------------------------------------------
-      function openModal(custom) {
-        const icon = custom.categoryIcon || 'fa-bookmark';
-        const color = custom.categoryColor || '#64748b';
-        modalIcon.style.background = color;
-        modalIcon.innerHTML = `<i class="fas ${icon}"></i>`;
-        modalCategory.textContent = custom.categoryLabel || 'General';
-        modalFullText.textContent = custom.fullText || 'Sin descripción';
-        modalFuente.textContent = custom.source || 'S/D';
-        modalPag.textContent = custom.page || 'S/D';
-        modalOverlay.classList.add('open');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeModal() {
-        modalOverlay.classList.remove('open');
-        document.body.style.overflow = '';
-      }
-
-      // Eventos del modal
-      modalClose.addEventListener('click', closeModal);
-      modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) closeModal();
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
-      });
-
-      // ------------------------------------------------------------
-      //  RENDERIZADO DE LA LÍNEA DE TIEMPO
-      // ------------------------------------------------------------
-      function renderTimeline(data) {
-        const groups = [];
-        const items = [];
-        const localidades = new Set();
-        categoryMap.clear();
-        activeCategories.clear();
-
-        data.forEach((row, idx) => {
-          const year = (row.Año || '').trim();
-          const loc = (row.Localidad || '').trim();
-          const desc = (row.Descripción || '').trim();
-          const catRaw = (row.Categoría || '').trim();
-          const fuente = (row.Fuente || '').trim();
-          const pag = (row.Pag || '').trim();
-
-          if (!year || !loc) return;
-
-          // Grupo
-          if (!localidades.has(loc)) {
-            localidades.add(loc);
-            groups.push({ id: loc, content: loc });
-          }
-
-          // Categoría
-          const info = getCategoryInfo(catRaw);
-          const rawKey = catRaw || 'General';
-          if (!categoryMap.has(rawKey)) {
-            categoryMap.set(rawKey, info);
-            activeCategories.add(rawKey);
-          }
-
-          // Fechas
-          let start, end = null,
-            type = 'box';
-          if (year.includes('-')) {
-            const parts = year.split('-');
-            start = parts[0].trim() + '-01-01';
-            end = parts[1].trim() + '-12-31';
-            type = 'range';
-          } else {
-            start = year + '-01-01';
-            type = 'box';
-          }
-
-          const style = type === 'range' ?
-            `background-color: ${info.color}; border-color: ${info.color};` :
-            `border-color: ${info.color}; color: ${info.color};`;
-
-          const first = getFirstSentence(desc);
-          const titleText = `${first} (${info.label})`;
-
-          items.push({
-            id: idx,
-            group: loc,
-            start: start,
-            end: end,
-            type: type,
-            content: `<i class="fas ${info.icon}"></i>`,
-            style: style,
-            title: titleText, // tooltip nativo
-            custom: {
-              rawCategory: rawKey,
-              categoryLabel: info.label,
-              categoryColor: info.color,
-              categoryIcon: info.icon,
-              fullText: desc,
-              source: fuente,
-              page: pag,
-              firstSentence: first
-            }
-          });
-        });
-
-        allItems = items;
-
-        // DataSet y DataView
-        itemsDataSet = new vis.DataSet(items);
-        itemsView = new vis.DataView(itemsDataSet, {
-          filter: (item) => activeCategories.has(item.custom.rawCategory)
-        });
-
-        const groupsDataSet = new vis.DataSet(groups);
-
-        // Configuración de la línea de tiempo
-        const options = {
-          stack: true,
-          orientation: 'top',
-          zoomable: true,
-          moveable: true,
-          min: new Date(1770, 0, 1),
-          max: new Date(2027, 11, 31),
-          zoomMin: 1000 * 60 * 60 * 24 * 365, // 1 año
-          format: {
-            minorLabels: { year: 'YYYY' }
-          },
-          margin: { item: 12, axis: 16 },
-          tooltip: {
-            followMouse: true,
-            overflowMethod: 'flip'
-          }
+        // ---- Colores ----
+        const categoryColors = {
+            'Huellas del transporte y las comunicaciones': '#3b82f6',
+            'Huellas de la energía': '#f59e0b',
+            'Huellas de la infraestructura y las  instituciones': '#10b981',
+            'Huellas de la infraestructura y las instituciones': '#10b981',
+            'Huellas del trabajo': '#ef4444',
+            'Huellas de la identidad y la celebración': '#8b5cf6',
+            'Huellas histórico-territoriales': '#f97316',
         };
 
-        timeline = new vis.Timeline(timelineEl, itemsView, groupsDataSet, options);
-
-        // Click → abrir modal
-        timeline.on('click', (props) => {
-          if (props.item) {
-            const item = itemsDataSet.get(props.item);
-            if (item && item.custom) {
-              openModal(item.custom);
+        function getCategoryColor(cat) {
+            const key = cat.trim();
+            if (categoryColors[key]) return categoryColors[key];
+            let hash = 0;
+            for (let i = 0; i < key.length; i++) {
+                hash = key.charCodeAt(i) + ((hash << 5) - hash);
             }
-          }
+            return `hsl(${Math.abs(hash) % 360}, 70%, 55%)`;
+        }
+
+        // ---- DOM ----
+        const fileInput = document.getElementById('fileInput');
+        const visDiv = document.getElementById('vis');
+        const tooltipDiv = document.getElementById('tooltip');
+        const loadingMsg = document.getElementById('loadingMsg');
+        const legendContainer = document.getElementById('legendContainer');
+        const filterGroup = document.getElementById('filterGroup');
+        const resetZoomBtn = document.getElementById('resetZoomBtn');
+
+        // ---- Estado ----
+        let allEvents = [];
+        let activeCategories = new Set();
+        let svgSelection = null;
+        let zoomBehavior = null;
+        let currentXScale = null;
+
+        // ---- Tooltip ----
+        let tooltipTimeout = null;
+        let isTooltipHovered = false;
+        let isEventHovered = false;
+
+        const tooltipMore = document.getElementById('tooltipMore');
+        const tooltipClose = document.getElementById('tooltipClose');
+        const firstSentenceEl = tooltipDiv.querySelector('.first-sentence');
+        const fullTextEl = document.getElementById('tooltipFull').querySelector('.full-text');
+        const sourceEl = document.getElementById('tooltipSource');
+        const pageEl = document.getElementById('tooltipPage');
+        const linkEl = document.getElementById('tooltipLink');
+        const fullDiv = document.getElementById('tooltipFull');
+
+        function showTooltip(clientX, clientY, first, full, source, page, url) {
+            clearTimeout(tooltipTimeout);
+            firstSentenceEl.textContent = first || '(sin descripción)';
+            fullTextEl.textContent = full || '';
+            sourceEl.textContent = source || '—';
+            pageEl.textContent = page || '—';
+            if (url && url.startsWith('http')) {
+                linkEl.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+            } else {
+                linkEl.textContent = url || '—';
+            }
+            fullDiv.classList.remove('show');
+            tooltipMore.textContent = 'Ver más';
+            tooltipDiv.classList.remove('expanded');
+
+            let left = clientX + 14;
+            let top = clientY - 10;
+            const tw = Math.min(380, window.innerWidth - 30);
+            const th = Math.min(400, window.innerHeight - 30);
+            if (left + tw > window.innerWidth - 10) left = clientX - tw - 14;
+            if (top + th > window.innerHeight - 10) top = window.innerHeight - th - 10;
+            if (top < 10) top = 10;
+            tooltipDiv.style.left = left + 'px';
+            tooltipDiv.style.top = top + 'px';
+            tooltipDiv.style.display = 'block';
+            tooltipDiv.dataset.open = 'true';
+        }
+
+        function hideTooltip(delayed = true) {
+            if (delayed) {
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = setTimeout(() => {
+                    if (!isTooltipHovered && !isEventHovered) {
+                        tooltipDiv.style.display = 'none';
+                        tooltipDiv.dataset.open = 'false';
+                        fullDiv.classList.remove('show');
+                        tooltipDiv.classList.remove('expanded');
+                        tooltipMore.textContent = 'Ver más';
+                    }
+                }, 150);
+            } else {
+                clearTimeout(tooltipTimeout);
+                tooltipDiv.style.display = 'none';
+                tooltipDiv.dataset.open = 'false';
+                fullDiv.classList.remove('show');
+                tooltipDiv.classList.remove('expanded');
+                tooltipMore.textContent = 'Ver más';
+            }
+        }
+
+        tooltipDiv.addEventListener('mouseenter', () => {
+            isTooltipHovered = true;
+            clearTimeout(tooltipTimeout);
+        });
+        tooltipDiv.addEventListener('mouseleave', () => {
+            isTooltipHovered = false;
+            if (!isEventHovered) {
+                hideTooltip(true);
+            }
         });
 
-        // Mostrar
-        timelineEl.style.display = 'block';
-        loaderEl.style.display = 'none';
-
-        // Construir botones de filtro
-        rebuildFilterButtons();
-
-        // Evento "Todas"
-        btnAll.addEventListener('click', function() {
-          const allActive = activeCategories.size === categoryMap.size;
-          const btns = filterGroup.querySelectorAll('.filter-btn:not(#btnAll)');
-          if (allActive) {
-            activeCategories.clear();
-            btns.forEach(b => b.classList.remove('active'));
-            this.classList.remove('active');
-          } else {
-            categoryMap.forEach((_, key) => activeCategories.add(key));
-            btns.forEach(b => b.classList.add('active'));
-            this.classList.add('active');
-          }
-          refreshView();
+        tooltipMore.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isExpanded = tooltipDiv.classList.contains('expanded');
+            if (!isExpanded) {
+                fullDiv.classList.add('show');
+                tooltipDiv.classList.add('expanded');
+                tooltipMore.textContent = 'Ver menos';
+                const tw = Math.min(380, window.innerWidth - 30);
+                const th = Math.min(400, window.innerHeight - 30);
+                let left = parseFloat(tooltipDiv.style.left);
+                let top = parseFloat(tooltipDiv.style.top);
+                if (left + tw > window.innerWidth - 10) left = window.innerWidth - tw - 10;
+                if (top + th > window.innerHeight - 10) top = window.innerHeight - th - 10;
+                if (top < 10) top = 10;
+                tooltipDiv.style.left = left + 'px';
+                tooltipDiv.style.top = top + 'px';
+            } else {
+                fullDiv.classList.remove('show');
+                tooltipDiv.classList.remove('expanded');
+                tooltipMore.textContent = 'Ver más';
+            }
         });
-      }
 
-      // ------------------------------------------------------------
-      //  CARGA DEL CSV
-      // ------------------------------------------------------------
-      function loadCSV() {
-        fetch(CSV_URL)
-          .then(res => {
-            if (!res.ok) throw new Error(`No se pudo cargar ${CSV_URL}`);
-            return res.arrayBuffer();
-          })
-          .then(buffer => {
-            const decoder = new TextDecoder('iso-8859-1');
-            const csvText = decoder.decode(buffer);
-            Papa.parse(csvText, {
-              header: true,
-              skipEmptyLines: true,
-              complete: (result) => {
-                if (result.data && result.data.length) {
-                  renderTimeline(result.data);
-                } else {
-                  throw new Error('El CSV está vacío o mal formado');
+        tooltipClose.addEventListener('click', function() {
+            hideTooltip(false);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (tooltipDiv.dataset.open === 'true') {
+                const target = e.target;
+                if (!tooltipDiv.contains(target) && !target.closest('.event-group')) {
+                    hideTooltip(false);
                 }
-              },
-              error: (err) => {
-                throw err;
-              }
-            });
-          })
-          .catch(err => {
-            loaderEl.innerHTML = `<span style="color:#b91c1c;font-weight:600;">⚠️ Error:</span> ${err.message}`;
-          });
-      }
+            }
+        });
 
-      // Iniciar
-      loadCSV();
+        // ---- Utilidades ----
+        function firstSentence(text) {
+            if (!text) return '';
+            const idx = text.search(/\.\s+/);
+            if (idx !== -1) return text.substring(0, idx + 1).trim();
+            return text.trim();
+        }
+
+        function restText(text) {
+            if (!text) return '';
+            const idx = text.search(/\.\s+/);
+            if (idx !== -1) return text.substring(idx + 1).trim();
+            return '';
+        }
+
+        // ---- Parseo Excel ----
+        function parseEventsFromSheet(sheet) {
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            if (rows.length < 2) return [];
+            const header = rows[0];
+            const getIndex = (name) => {
+                const idx = header.findIndex(cell => cell && cell.toString().trim() === name);
+                return idx !== -1 ? idx : null;
+            };
+            const idxYear = getIndex('Año') ?? 0;
+            const idxLoc = getIndex('Localidad') ?? 1;
+            const idxDesc = getIndex('Descripción') ?? 2;
+            const idxCat = getIndex('Categoría') ?? 3;
+            const idxSource = getIndex('Fuente') ?? 4;
+            const idxPage = getIndex('Pag') ?? 5;
+            const idxUrl = getIndex('G') ?? 6;
+
+            const events = [];
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
+                const yearRaw = row[idxYear] ? row[idxYear].toString().trim() : '';
+                const localidad = row[idxLoc] ? row[idxLoc].toString().trim() : '';
+                const desc = row[idxDesc] ? row[idxDesc].toString().trim() : '';
+                const cat = row[idxCat] ? row[idxCat].toString().trim() : '';
+                const fuente = row[idxSource] ? row[idxSource].toString().trim() : '';
+                const pagina = row[idxPage] ? row[idxPage].toString().trim() : '';
+                const url = row[idxUrl] ? row[idxUrl].toString().trim() : '';
+                if (!yearRaw || !localidad) continue;
+                let start, end;
+                if (yearRaw.includes('-')) {
+                    const parts = yearRaw.split('-').map(s => s.trim());
+                    const s = parseInt(parts[0]);
+                    const e = parseInt(parts[1]);
+                    if (!isNaN(s) && !isNaN(e)) { start = Math.min(s, e);
+                        end = Math.max(s, e); } else continue;
+                } else {
+                    const num = parseInt(yearRaw);
+                    if (!isNaN(num)) { start = num;
+                        end = num; } else continue;
+                }
+                if (start < 1000 || end > 2100) continue;
+                // Si la categoría está vacía, asignar "Sin categoría"
+                const categoria = cat || 'Sin categoría';
+                events.push({ start, end, localidad, desc, categoria, fuente, pagina, url });
+            }
+            return events;
+        }
+
+        // ---- Render principal ----
+        function render(events, activeCats) {
+            if (!events || events.length === 0) {
+                visDiv.innerHTML = '<div class="loading">No hay eventos para mostrar.</div>';
+                legendContainer.innerHTML = '';
+                filterGroup.innerHTML = '';
+                return;
+            }
+
+            let filtered = events;
+            if (activeCats && activeCats.size > 0) {
+                filtered = events.filter(e => activeCats.has(e.categoria));
+            }
+            if (filtered.length === 0) {
+                visDiv.innerHTML = '<div class="loading">No hay eventos con las categorías seleccionadas.</div>';
+                legendContainer.innerHTML = '';
+                return;
+            }
+
+            const localidades = [...new Set(filtered.map(e => e.localidad))].sort((a, b) => a.localeCompare(b));
+            const minYear = Math.min(...filtered.map(e => e.start));
+            const maxYear = Math.max(...filtered.map(e => e.end));
+            const yearPadding = 2;
+            const xMin = minYear - yearPadding;
+            const xMax = maxYear + yearPadding;
+
+            const margin = { top: 40, right: 60, bottom: 60, left: 130 };
+            const width = Math.max(800, visDiv.clientWidth - 20);
+            const rowHeight = 44;
+            const height = Math.max(400, localidades.length * rowHeight + margin.top + margin.bottom);
+
+            visDiv.innerHTML = '';
+            const svg = d3.select(visDiv)
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .style('overflow', 'visible');
+
+            // Clip path
+            const clipId = 'clip-' + Date.now();
+            svg.append('defs')
+                .append('clipPath')
+                .attr('id', clipId)
+                .append('rect')
+                .attr('x', margin.left)
+                .attr('y', margin.top)
+                .attr('width', width - margin.left - margin.right)
+                .attr('height', height - margin.top - margin.bottom);
+
+            const chartGroup = svg.append('g')
+                .attr('class', 'chart-group')
+                .attr('clip-path', `url(#${clipId})`);
+
+            // Fondo
+            chartGroup.append('rect')
+                .attr('x', margin.left)
+                .attr('y', margin.top)
+                .attr('width', width - margin.left - margin.right)
+                .attr('height', height - margin.top - margin.bottom)
+                .attr('fill', 'white')
+                .attr('stroke', '#e2e8f0')
+                .attr('stroke-width', 0.5);
+
+            const xScale = d3.scaleLinear()
+                .domain([xMin, xMax])
+                .range([margin.left, width - margin.right]);
+
+            const yScale = d3.scaleBand()
+                .domain(localidades)
+                .range([margin.top, height - margin.bottom])
+                .padding(0.5);
+
+            const bandWidth = yScale.bandwidth();
+
+            // Líneas separadoras horizontales
+            localidades.forEach(loc => {
+                const yPos = yScale(loc) + bandWidth;
+                chartGroup.append('line')
+                    .attr('x1', margin.left)
+                    .attr('x2', width - margin.right)
+                    .attr('y1', yPos)
+                    .attr('y2', yPos)
+                    .attr('stroke', '#e9edf2')
+                    .attr('stroke-width', 1)
+                    .attr('stroke-dasharray', '4,4');
+            });
+
+            // Eje X
+            const xAxis = d3.axisBottom(xScale)
+                .tickFormat(d3.format('d'))
+                .ticks(Math.min(20, (maxYear - minYear) / 2));
+
+            const xAxisG = svg.append('g')
+                .attr('class', 'x-axis')
+                .attr('transform', `translate(0, ${height - margin.bottom})`)
+                .call(xAxis)
+                .style('font-size', '11px')
+                .style('color', '#475569');
+
+            // Eje Y
+            const yAxis = d3.axisLeft(yScale)
+                .tickSize(0);
+
+            const yAxisG = svg.append('g')
+                .attr('class', 'y-axis')
+                .attr('transform', `translate(${margin.left - 6}, 0)`)
+                .call(yAxis)
+                .style('font-size', '12px')
+                .style('font-weight', '500')
+                .style('color', '#1e293b');
+
+            // Preparar datos
+            const eventsByLoc = d3.group(filtered, d => d.localidad);
+            const orderedEventsByLoc = new Map();
+            localidades.forEach(loc => {
+                const evs = eventsByLoc.get(loc) || [];
+                evs.sort((a, b) => a.start - b.start || a.end - b.end);
+                orderedEventsByLoc.set(loc, evs);
+            });
+
+            function drawEvents(scaleX) {
+                chartGroup.selectAll('.event-group').remove();
+
+                localidades.forEach(loc => {
+                    const locEvents = orderedEventsByLoc.get(loc) || [];
+                    const yBase = yScale(loc);
+                    const bandH = bandWidth;
+
+                    locEvents.forEach((event, idx) => {
+                        const x1 = scaleX(event.start);
+                        const x2 = scaleX(event.end);
+                        const color = getCategoryColor(event.categoria);
+
+                        const offset = (idx % 2 === 0) ? bandH * 0.25 : bandH * 0.75;
+                        const yPos = yBase + offset;
+
+                        const group = chartGroup.append('g')
+                            .attr('class', 'event-group')
+                            .attr('data-start', event.start)
+                            .attr('data-end', event.end)
+                            .attr('data-localidad', event.localidad)
+                            .attr('data-desc', event.desc)
+                            .attr('data-cat', event.categoria)
+                            .attr('data-fuente', event.fuente)
+                            .attr('data-pagina', event.pagina)
+                            .attr('data-url', event.url);
+
+                        if (event.start === event.end) {
+                            const radius = Math.min(5, bandH * 0.16);
+                            group.append('circle')
+                                .attr('cx', x1)
+                                .attr('cy', yPos)
+                                .attr('r', radius)
+                                .attr('fill', color)
+                                .attr('stroke', '#1e293b')
+                                .attr('stroke-width', 0.8)
+                                .style('cursor', 'pointer')
+                                .style('opacity', 0.9);
+                        } else {
+                            const barHeight = Math.max(2.5, bandH * 0.14);
+                            group.append('rect')
+                                .attr('x', x1)
+                                .attr('y', yPos - barHeight / 2)
+                                .attr('width', Math.max(2, x2 - x1))
+                                .attr('height', barHeight)
+                                .attr('fill', color)
+                                .attr('stroke', '#1e293b')
+                                .attr('stroke-width', 0.8)
+                                .style('cursor', 'pointer')
+                                .style('opacity', 0.9);
+                        }
+
+                        group.on('mouseenter', function(ev) {
+                            const el = this;
+                            isEventHovered = true;
+                            clearTimeout(tooltipTimeout);
+                            const first = firstSentence(el.getAttribute('data-desc'));
+                            const full = restText(el.getAttribute('data-desc'));
+                            const fuente = el.getAttribute('data-fuente');
+                            const pagina = el.getAttribute('data-pagina');
+                            const url = el.getAttribute('data-url');
+                            showTooltip(ev.clientX, ev.clientY, first, full, fuente, pagina, url);
+                        })
+                        .on('mousemove', function(ev) {
+                            if (tooltipDiv.dataset.open === 'true') {
+                                let left = ev.clientX + 14;
+                                let top = ev.clientY - 10;
+                                const tw = Math.min(380, window.innerWidth - 30);
+                                const th = Math.min(400, window.innerHeight - 30);
+                                if (left + tw > window.innerWidth - 10) left = ev.clientX - tw - 14;
+                                if (top + th > window.innerHeight - 10) top = window.innerHeight - th - 10;
+                                if (top < 10) top = 10;
+                                tooltipDiv.style.left = left + 'px';
+                                tooltipDiv.style.top = top + 'px';
+                            }
+                        })
+                        .on('mouseleave', function() {
+                            isEventHovered = false;
+                            if (!isTooltipHovered) {
+                                hideTooltip(true);
+                            }
+                        });
+                    });
+                });
+            }
+
+            drawEvents(xScale);
+
+            // Zoom
+            const zoom = d3.zoom()
+                .scaleExtent([0.5, 50])
+                .on('zoom', function(zoomEvent) {
+                    const transform = zoomEvent.transform;
+                    const newXScale = transform.rescaleX(xScale);
+                    currentXScale = newXScale;
+                    xAxisG.call(xAxis.scale(newXScale));
+                    drawEvents(newXScale);
+                });
+
+            svg.call(zoom);
+            svgSelection = svg;
+            zoomBehavior = zoom;
+            currentXScale = xScale;
+
+            // ---- Leyenda sin iconos ----
+            const cats = [...new Set(filtered.map(e => e.categoria))];
+            legendContainer.innerHTML = cats.map(cat => {
+                const color = getCategoryColor(cat);
+                return `<div class="legend-item">
+                            <span class="legend-color" style="background:${color}"></span>
+                            ${cat}
+                        </div>`;
+            }).join('');
+
+            // ---- Filtros sin iconos ----
+            const allCats = [...new Set(events.map(e => e.categoria))];
+            const allChecked = allCats.every(cat => activeCats.has(cat));
+
+            let filterHtml = `<label class="filter-all" title="Activar/desactivar todas las categorías">
+                                <input type="checkbox" id="selectAllCats" ${allChecked ? 'checked' : ''} />
+                                <span>✅ Todas</span>
+                             </label>`;
+
+            filterHtml += allCats.map(cat => {
+                const color = getCategoryColor(cat);
+                const checked = activeCats.has(cat) ? 'checked' : '';
+                return `<label class="filter-item">
+                            <input type="checkbox" value="${cat}" ${checked} />
+                            <span class="color-dot" style="background:${color}"></span>
+                            ${cat}
+                        </label>`;
+            }).join('');
+
+            filterGroup.innerHTML = filterHtml;
+
+            // ---- Comportamiento "Todas" ----
+            const selectAllCb = document.getElementById('selectAllCats');
+            const allCheckboxes = filterGroup.querySelectorAll('input[type="checkbox"]:not(#selectAllCats)');
+
+            function updateSelectAllState() {
+                const checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;
+                if (selectAllCb) {
+                    selectAllCb.checked = (checkedCount === allCheckboxes.length);
+                }
+            }
+
+            if (selectAllCb) {
+                selectAllCb.addEventListener('change', function() {
+                    const checked = this.checked;
+                    allCheckboxes.forEach(cb => {
+                        cb.checked = checked;
+                        const cat = cb.value;
+                        if (checked) {
+                            activeCategories.add(cat);
+                        } else {
+                            activeCategories.delete(cat);
+                        }
+                    });
+                    // Si se desmarcan todas, forzamos a que se activen todas (para evitar estado vacío)
+                    if (!checked) {
+                        // Activar todas
+                        activeCategories = new Set(allCats);
+                        allCheckboxes.forEach(cb => {
+                            cb.checked = true;
+                        });
+                        selectAllCb.checked = true;
+                    }
+                    render(allEvents, activeCategories);
+                });
+            }
+
+            // Eventos individuales
+            allCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const cat = this.value;
+                    if (this.checked) {
+                        activeCategories.add(cat);
+                    } else {
+                        activeCategories.delete(cat);
+                    }
+                    // Actualizar "Todas"
+                    updateSelectAllState();
+                    // Si no hay ninguna activa, forzar todas
+                    if (activeCategories.size === 0) {
+                        activeCategories = new Set(allCats);
+                        allCheckboxes.forEach(c => c.checked = true);
+                        if (selectAllCb) selectAllCb.checked = true;
+                    }
+                    render(allEvents, activeCategories);
+                });
+            });
+
+            // Sincronizar estado inicial
+            updateSelectAllState();
+
+            svg.attr('height', height);
+        }
+
+        // ---- Reset zoom ----
+        resetZoomBtn.addEventListener('click', function() {
+            if (svgSelection && zoomBehavior) {
+                svgSelection.transition().duration(300).call(zoomBehavior.transform, d3.zoomIdentity);
+            }
+        });
+
+        // ---- Carga de archivo ----
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(loadEvent) {
+                try {
+                    const data = new Uint8Array(loadEvent.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    let sheetName = 'Cronologica de detalle';
+                    let sheet = workbook.Sheets[sheetName];
+                    if (!sheet) {
+                        sheetName = workbook.SheetNames[0];
+                        sheet = workbook.Sheets[sheetName];
+                    }
+                    if (!sheet) {
+                        visDiv.innerHTML = '<div class="loading">No se encontraron hojas en el archivo.</div>';
+                        return;
+                    }
+                    const events = parseEventsFromSheet(sheet);
+                    if (events.length === 0) {
+                        visDiv.innerHTML = '<div class="loading">No se pudieron extraer eventos válidos.</div>';
+                        legendContainer.innerHTML = '';
+                        filterGroup.innerHTML = '';
+                        return;
+                    }
+                    allEvents = events;
+                    activeCategories = new Set(events.map(e => e.categoria));
+                    render(events, activeCategories);
+                } catch (err) {
+                    console.error(err);
+                    visDiv.innerHTML = `<div class="loading">Error al leer el archivo: ${err.message}</div>`;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Inicial
+        loadingMsg.textContent = 'Cargue un archivo Excel para visualizar la línea de tiempo.';
+
+        window.addEventListener('resize', function() {
+            if (allEvents.length) {
+                render(allEvents, activeCategories);
+            }
+        });
 
     })();
-  </script>
+</script>
+
 </body>
 </html>
+```
