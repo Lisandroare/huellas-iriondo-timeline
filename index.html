@@ -1,677 +1,776 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cronología Histórica Interactiva</title>
-    <!-- Fuente e iconos -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <!-- Vis-Timeline -->
-    <link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" />
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f1f5f9;
-            color: #0b1e33;
-            padding: 24px;
-            min-height: 100vh;
-        }
-        .app-wrapper {
-            max-width: 1440px;
-            margin: 0 auto;
-        }
-        h1 {
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin-bottom: 18px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        h1 i {
-            color: #3b82f6;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cronología Histórica Interactiva</title>
+  <!-- Fuentes e iconos -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Vis-Timeline -->
+  <link href="https://unpkg.com/vis-timeline@latest/styles/vis-timeline-graph2d.min.css" rel="stylesheet" />
+  <style>
+    /* ----- Reset & Base ----- */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f6f9fc;
+      color: #0b1e33;
+      padding: 28px 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+    .app {
+      max-width: 1440px;
+      width: 100%;
+    }
 
-        /* Panel de filtros */
-        .controls-panel {
-            background: #ffffff;
-            padding: 14px 20px;
-            border-radius: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-            border: 1px solid #e2e8f0;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px 16px;
-            margin-bottom: 22px;
-        }
-        .filter-title {
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            color: #64748b;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .filter-group {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 8px;
-        }
-        .filter-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            border-radius: 30px;
-            border: 1.5px solid #e2e8f0;
-            background: #fff;
-            font-size: 13px;
-            font-weight: 500;
-            color: #475569;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-        .filter-btn:hover {
-            border-color: #94a3b8;
-            transform: translateY(-1px);
-        }
-        .filter-btn.active {
-            background-color: var(--cat-color, #3b82f6);
-            border-color: var(--cat-color, #3b82f6);
-            color: #fff;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-        }
-        .filter-btn-all {
-            border-color: #94a3b8;
-            font-weight: 600;
-        }
-        .filter-btn-all.active {
-            background-color: #334155;
-            border-color: #334155;
-            color: #fff;
-        }
+    /* ----- Encabezado ----- */
+    .app-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      gap: 16px;
+    }
+    .app-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .app-header h1 i {
+      color: #3b82f6;
+      background: #e8f0fe;
+      padding: 10px;
+      border-radius: 14px;
+      font-size: 22px;
+    }
+    .app-header .subtitle {
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 400;
+      margin-top: 4px;
+    }
 
-        /* Contenedor de la línea de tiempo */
-        #timeline-container {
-            background: #ffffff;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 6px 24px rgba(0,0,0,0.04);
-            overflow: hidden;
-            height: 78vh;
-            min-height: 480px;
-            position: relative;
-        }
-        #timeline {
-            width: 100%;
-            height: 100%;
-        }
+    /* ----- Panel de filtros ----- */
+    .filters {
+      background: #ffffff;
+      padding: 12px 20px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+      border: 1px solid #e9edf2;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px 20px;
+      margin-bottom: 24px;
+    }
+    .filters .label {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .filter-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 40px;
+      border: 1.5px solid #dce1e8;
+      background: #ffffff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+    .filter-btn:hover {
+      border-color: #b0bcc9;
+      transform: translateY(-1px);
+    }
+    .filter-btn.active {
+      background-color: var(--cat-color, #3b82f6);
+      border-color: var(--cat-color, #3b82f6);
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+    .filter-btn-all {
+      border-color: #b0bcc9;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .filter-btn-all.active {
+      background-color: #1e293b;
+      border-color: #1e293b;
+      color: #ffffff;
+    }
+    .filter-btn-all.active:hover {
+      background-color: #0f172a;
+    }
 
-        /* Ajustes de vis-timeline */
-        .vis-label {
-            font-size: 13px !important;
-            font-weight: 600 !important;
-            color: #1e293b !important;
-            padding: 0 16px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-        }
-        .vis-group {
-            height: 44px !important;
-            border-bottom: 1px solid #f8fafc !important;
-        }
-        .vis-time-axis .vis-text {
-            font-weight: 600;
-            color: #475569;
-            font-size: 12px;
-        }
+    /* ----- Contenedor de la línea de tiempo ----- */
+    .timeline-wrapper {
+      background: #ffffff;
+      border-radius: 18px;
+      border: 1px solid #e9edf2;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+      overflow: hidden;
+      height: 72vh;
+      min-height: 400px;
+      position: relative;
+    }
+    #timeline {
+      width: 100%;
+      height: 100%;
+    }
 
-        /* Ítems: puntos y rangos */
-        .vis-item {
-            cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
-            border-width: 2px !important;
-            background: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .vis-item:hover {
-            transform: scale(1.18);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.18);
-            z-index: 10;
-        }
-        .vis-item.vis-box {
-            border-radius: 50% !important;
-            width: 28px !important;
-            height: 28px !important;
-            padding: 0 !important;
-        }
-        .vis-item.vis-range {
-            border-radius: 8px;
-            height: 28px;
-            opacity: 0.92;
-            padding: 0 10px;
-        }
-        .vis-item.vis-range .vis-item-content {
-            color: #fff !important;
-            font-weight: 500;
-            font-size: 12px;
-        }
-        .vis-item-content {
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-        }
-        .vis-item .vis-item-content i {
-            font-size: 14px;
-        }
+    /* ----- Loader ----- */
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #64748b;
+      font-size: 15px;
+      gap: 16px;
+    }
+    .loader .spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
 
-        /* Loader */
-        #loader {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            font-size: 16px;
-            color: #64748b;
-            gap: 12px;
-        }
-        #loader .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e2e8f0;
-            border-top-color: #3b82f6;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+    /* ----- Ajustes de vis-timeline ----- */
+    .vis-label {
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      color: #1e293b !important;
+      padding: 0 16px !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+    }
+    .vis-group {
+      height: 44px !important;
+      border-bottom: 1px solid #f8fafc !important;
+    }
+    .vis-time-axis .vis-text {
+      font-weight: 600;
+      color: #475569;
+      font-size: 12px;
+    }
+    .vis-time-axis .vis-grid {
+      border-color: #e9edf2;
+    }
 
-        /* MODAL */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.40);
-            backdrop-filter: blur(4px);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            animation: fadeIn 0.2s ease;
-        }
-        .modal-overlay.open {
-            display: flex;
-        }
-        .modal-card {
-            background: #fff;
-            max-width: 560px;
-            width: 100%;
-            border-radius: 20px;
-            box-shadow: 0 24px 60px rgba(0,0,0,0.25);
-            padding: 28px 32px;
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: slideUp 0.25s ease;
-        }
-        .modal-close {
-            position: absolute;
-            top: 14px;
-            right: 20px;
-            background: none;
-            border: none;
-            font-size: 28px;
-            color: #94a3b8;
-            cursor: pointer;
-            transition: color 0.2s;
-            line-height: 1;
-        }
-        .modal-close:hover {
-            color: #1e293b;
-        }
-        .modal-header {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 16px;
-            border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 14px;
-        }
-        .modal-header .cat-icon {
-            font-size: 24px;
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-        }
-        .modal-header .cat-name {
-            font-weight: 700;
-            font-size: 20px;
-            color: #0b1e33;
-        }
-        .modal-body {
-            margin: 12px 0 20px 0;
-        }
-        .modal-body .full-text {
-            font-size: 15px;
-            line-height: 1.7;
-            color: #1e293b;
-            margin-bottom: 18px;
-        }
-        .modal-meta {
-            background: #f8fafc;
-            padding: 14px 18px;
-            border-radius: 12px;
-            font-size: 14px;
-            color: #334155;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .modal-meta strong {
-            font-weight: 600;
-            color: #0b1e33;
-        }
-        .modal-meta span {
-            display: block;
-        }
+    /* Items (puntos y rangos) */
+    .vis-item {
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      border-width: 2px !important;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50% !important;
+      width: 30px !important;
+      height: 30px !important;
+      padding: 0 !important;
+    }
+    .vis-item.vis-range {
+      border-radius: 10px !important;
+      width: auto !important;
+      height: 28px !important;
+      padding: 0 12px !important;
+      opacity: 0.92;
+    }
+    .vis-item.vis-range .vis-item-content {
+      color: #ffffff !important;
+      font-weight: 500;
+      font-size: 12px;
+    }
+    .vis-item .vis-item-content {
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+    .vis-item:hover {
+      transform: scale(1.16);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+      z-index: 10;
+    }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px) scale(0.97); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
+    /* ----- Modal ----- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(6px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      animation: fadeIn 0.25s ease;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-card {
+      background: #ffffff;
+      max-width: 540px;
+      width: 100%;
+      border-radius: 24px;
+      box-shadow: 0 32px 64px rgba(0, 0, 0, 0.18);
+      padding: 32px 36px 28px;
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      background: none;
+      border: none;
+      font-size: 30px;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+    .modal-close:hover {
+      color: #1e293b;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 16px;
+    }
+    .modal-header .icon-box {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .modal-header .cat-name {
+      font-weight: 700;
+      font-size: 20px;
+      color: #0b1e33;
+    }
+    .modal-body {
+      margin: 8px 0 20px;
+    }
+    .modal-body .full-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #1e293b;
+      margin-bottom: 20px;
+    }
+    .modal-meta {
+      background: #f8fafc;
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 14px;
+      color: #334155;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .modal-meta strong {
+      font-weight: 600;
+      color: #0b1e33;
+    }
+    .modal-meta span {
+      display: block;
+    }
 
-        /* Responsive */
-        @media (max-width: 640px) {
-            body { padding: 12px; }
-            .controls-panel { padding: 12px 16px; }
-            .filter-btn { padding: 5px 12px; font-size: 12px; }
-            .modal-card { padding: 20px; }
-            .modal-header .cat-name { font-size: 18px; }
-        }
-    </style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* ----- Responsive ----- */
+    @media (max-width: 700px) {
+      body {
+        padding: 16px 12px;
+      }
+      .app-header h1 {
+        font-size: 22px;
+      }
+      .app-header h1 i {
+        font-size: 18px;
+        padding: 8px;
+      }
+      .filters {
+        padding: 10px 14px;
+        gap: 8px;
+      }
+      .filter-btn {
+        padding: 5px 12px;
+        font-size: 12px;
+      }
+      .modal-card {
+        padding: 24px 20px;
+      }
+      .modal-header .cat-name {
+        font-size: 18px;
+      }
+      .modal-body .full-text {
+        font-size: 14px;
+      }
+    }
+    @media (max-width: 480px) {
+      .timeline-wrapper {
+        height: 60vh;
+        min-height: 320px;
+      }
+      .vis-item {
+        width: 24px !important;
+        height: 24px !important;
+      }
+      .vis-item.vis-range {
+        height: 24px !important;
+        padding: 0 8px !important;
+        font-size: 10px;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div class="app">
+    <!-- Encabezado -->
+    <header class="app-header">
+      <div>
+        <h1><i class="fas fa-timeline"></i> Cronología Histórica</h1>
+        <div class="subtitle">Explora el pasado a través de una línea de tiempo interactiva</div>
+      </div>
+    </header>
 
-<div class="app-wrapper">
-    <h1><i class="fas fa-timeline"></i> Cronología Histórica</h1>
-
-    <!-- Panel de filtros -->
-    <div class="controls-panel" id="controls">
-        <span class="filter-title"><i class="fas fa-filter"></i> Categorías</span>
-        <div class="filter-group" id="filterGroup">
-            <button class="filter-btn filter-btn-all active" id="btnAll" data-key="__all__">
-                <i class="fas fa-layer-group"></i> Todas
-            </button>
-        </div>
+    <!-- Filtros -->
+    <div class="filters" id="filtersPanel">
+      <span class="label"><i class="fas fa-filter"></i> Categorías</span>
+      <div class="filter-group" id="filterGroup">
+        <button class="filter-btn filter-btn-all active" id="btnAll" data-key="__all__">
+          <i class="fas fa-layer-group"></i> Todas
+        </button>
+      </div>
     </div>
 
     <!-- Línea de tiempo -->
-    <div id="timeline-container">
-        <div id="loader">
-            <div class="spinner"></div>
-            Cargando datos…
-        </div>
-        <div id="timeline" style="display:none;"></div>
+    <div class="timeline-wrapper">
+      <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <span>Cargando datos históricos…</span>
+      </div>
+      <div id="timeline" style="display:none;"></div>
     </div>
-</div>
+  </div>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modalOverlay">
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
     <div class="modal-card">
-        <button class="modal-close" id="modalClose">&times;</button>
-        <div class="modal-header">
-            <div class="cat-icon" id="modalIcon" style="background:#3b82f6;"><i class="fas fa-bookmark"></i></div>
-            <div class="cat-name" id="modalCategory">Categoría</div>
+      <button class="modal-close" id="modalClose">&times;</button>
+      <div class="modal-header">
+        <div class="icon-box" id="modalIcon" style="background:#3b82f6;"><i class="fas fa-bookmark"></i></div>
+        <div class="cat-name" id="modalCategory">Categoría</div>
+      </div>
+      <div class="modal-body">
+        <p class="full-text" id="modalFullText"></p>
+        <div class="modal-meta">
+          <span><strong>Fuente:</strong> <span id="modalFuente"></span></span>
+          <span><strong>Página:</strong> <span id="modalPag"></span></span>
         </div>
-        <div class="modal-body">
-            <p class="full-text" id="modalFullText"></p>
-            <div class="modal-meta">
-                <span><strong>Fuente:</strong> <span id="modalFuente"></span></span>
-                <span><strong>Página:</strong> <span id="modalPag"></span></span>
-            </div>
-        </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js"></script>
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js">
+  </script>
+  <script src="https://unpkg.com/vis-timeline@latest/standalone/umd/vis-timeline-graph2d.min.js">
+  </script>
 
-<script>
+  <script>
     (function() {
-        // ---------- CONFIGURACIÓN ----------
-        const CSV_URL = "CRONOLOGIAS FINAL.csv";
+      'use strict';
 
-        // ---------- ESTADO ----------
-        let timeline = null;
-        let itemsDataSet = null;
-        let itemsView = null;
-        let allItems = [];
-        let activeCategories = new Set();
-        let categoryMap = new Map(); // rawKey -> { label, color, icon }
+      // ------------------------------------------------------------
+      //  CONFIGURACIÓN
+      // ------------------------------------------------------------
+      const CSV_URL = 'CRONOLOGIAS FINAL.csv';
 
-        // ---------- DOM ----------
-        const loaderEl = document.getElementById('loader');
-        const timelineEl = document.getElementById('timeline');
-        const filterGroup = document.getElementById('filterGroup');
-        const btnAll = document.getElementById('btnAll');
+      // ------------------------------------------------------------
+      //  DOM REFS
+      // ------------------------------------------------------------
+      const loaderEl = document.getElementById('loader');
+      const timelineEl = document.getElementById('timeline');
+      const filterGroup = document.getElementById('filterGroup');
+      const btnAll = document.getElementById('btnAll');
 
-        // Modal
-        const modalOverlay = document.getElementById('modalOverlay');
-        const modalClose = document.getElementById('modalClose');
-        const modalIcon = document.getElementById('modalIcon');
-        const modalCategory = document.getElementById('modalCategory');
-        const modalFullText = document.getElementById('modalFullText');
-        const modalFuente = document.getElementById('modalFuente');
-        const modalPag = document.getElementById('modalPag');
+      const modalOverlay = document.getElementById('modalOverlay');
+      const modalClose = document.getElementById('modalClose');
+      const modalIcon = document.getElementById('modalIcon');
+      const modalCategory = document.getElementById('modalCategory');
+      const modalFullText = document.getElementById('modalFullText');
+      const modalFuente = document.getElementById('modalFuente');
+      const modalPag = document.getElementById('modalPag');
 
-        // ---------- UTILIDADES ----------
-        function getCategoryInfo(raw) {
-            const c = (raw || "").toLowerCase();
-            if (c.includes("transporte") || c.includes("comunicacion")) {
-                return { label: "Transporte y Comunicaciones", color: "#2563eb", icon: "fa-bus" };
-            }
-            if (c.includes("energía") || c.includes("energia")) {
-                return { label: "Energía", color: "#d97706", icon: "fa-bolt" };
-            }
-            if (c.includes("infraestructura") || c.includes("institucion")) {
-                return { label: "Infraestructura e Instituciones", color: "#7c3aed", icon: "fa-building" };
-            }
-            if (c.includes("trabajo")) {
-                return { label: "Trabajo", color: "#059669", icon: "fa-hammer" };
-            }
-            if (c.includes("identidad") || c.includes("celebración") || c.includes("celebracion")) {
-                return { label: "Identidad y Celebración", color: "#dc2626", icon: "fa-star" };
-            }
-            return { label: raw || "General", color: "#64748b", icon: "fa-bookmark" };
+      // ------------------------------------------------------------
+      //  ESTADO
+      // ------------------------------------------------------------
+      let timeline = null;
+      let itemsDataSet = null;
+      let itemsView = null;
+      let allItems = [];
+      let activeCategories = new Set();
+      let categoryMap = new Map(); // rawKey -> { label, color, icon }
+
+      // ------------------------------------------------------------
+      //  UTILIDADES
+      // ------------------------------------------------------------
+      function getCategoryInfo(raw) {
+        const c = (raw || '').toLowerCase();
+        if (c.includes('transporte') || c.includes('comunicacion')) {
+          return { label: 'Transporte y Comunicaciones', color: '#2563eb', icon: 'fa-bus' };
         }
-
-        function getFirstSentence(text) {
-            if (!text) return "";
-            const m = text.match(/(.*?[.!?])(?:\s|$)/);
-            return m ? m[1] : text;
+        if (c.includes('energía') || c.includes('energia')) {
+          return { label: 'Energía', color: '#d97706', icon: 'fa-bolt' };
         }
-
-        // ---------- FILTROS ----------
-        function rebuildFilterButtons() {
-            // Limpiar excepto el botón "Todas"
-            const allBtn = document.getElementById('btnAll');
-            filterGroup.innerHTML = '';
-            filterGroup.appendChild(allBtn);
-
-            categoryMap.forEach((info, rawKey) => {
-                const btn = document.createElement('button');
-                btn.className = 'filter-btn active';
-                btn.dataset.key = rawKey;
-                btn.style.setProperty('--cat-color', info.color);
-                btn.innerHTML = `<i class="fas ${info.icon}"></i> ${info.label}`;
-                btn.addEventListener('click', () => toggleCategory(rawKey, btn));
-                filterGroup.appendChild(btn);
-            });
-            // Actualizar estado visual
-            updateAllButtonState();
+        if (c.includes('infraestructura') || c.includes('institucion')) {
+          return { label: 'Infraestructura e Instituciones', color: '#7c3aed', icon: 'fa-building' };
         }
+        if (c.includes('trabajo')) {
+          return { label: 'Trabajo', color: '#059669', icon: 'fa-hammer' };
+        }
+        if (c.includes('identidad') || c.includes('celebración') || c.includes('celebracion')) {
+          return { label: 'Identidad y Celebración', color: '#dc2626', icon: 'fa-star' };
+        }
+        return { label: raw || 'General', color: '#64748b', icon: 'fa-bookmark' };
+      }
 
-        function toggleCategory(rawKey, btn) {
-            if (activeCategories.has(rawKey)) {
-                activeCategories.delete(rawKey);
-                btn.classList.remove('active');
-            } else {
-                activeCategories.add(rawKey);
-                btn.classList.add('active');
+      function getFirstSentence(text) {
+        if (!text) return '';
+        const match = text.match(/(.*?[.!?])(?:\s|$)/);
+        return match ? match[1] : text;
+      }
+
+      // ------------------------------------------------------------
+      //  FILTROS
+      // ------------------------------------------------------------
+      function rebuildFilterButtons() {
+        // Conservar el botón "Todas"
+        const allBtn = document.getElementById('btnAll');
+        filterGroup.innerHTML = '';
+        filterGroup.appendChild(allBtn);
+
+        categoryMap.forEach((info, rawKey) => {
+          const btn = document.createElement('button');
+          btn.className = 'filter-btn active';
+          btn.dataset.key = rawKey;
+          btn.style.setProperty('--cat-color', info.color);
+          btn.innerHTML = `<i class="fas ${info.icon}"></i> ${info.label}`;
+          btn.addEventListener('click', () => toggleCategory(rawKey, btn));
+          filterGroup.appendChild(btn);
+        });
+
+        updateAllButtonState();
+      }
+
+      function toggleCategory(rawKey, btn) {
+        if (activeCategories.has(rawKey)) {
+          activeCategories.delete(rawKey);
+          btn.classList.remove('active');
+        } else {
+          activeCategories.add(rawKey);
+          btn.classList.add('active');
+        }
+        updateAllButtonState();
+        refreshView();
+      }
+
+      function updateAllButtonState() {
+        const total = categoryMap.size;
+        const active = activeCategories.size;
+        if (total === 0) {
+          btnAll.classList.add('active');
+          return;
+        }
+        if (active === total) {
+          btnAll.classList.add('active');
+        } else {
+          btnAll.classList.remove('active');
+        }
+      }
+
+      function refreshView() {
+        if (itemsView) itemsView.refresh();
+      }
+
+      // ------------------------------------------------------------
+      //  MODAL
+      // ------------------------------------------------------------
+      function openModal(custom) {
+        const icon = custom.categoryIcon || 'fa-bookmark';
+        const color = custom.categoryColor || '#64748b';
+        modalIcon.style.background = color;
+        modalIcon.innerHTML = `<i class="fas ${icon}"></i>`;
+        modalCategory.textContent = custom.categoryLabel || 'General';
+        modalFullText.textContent = custom.fullText || 'Sin descripción';
+        modalFuente.textContent = custom.source || 'S/D';
+        modalPag.textContent = custom.page || 'S/D';
+        modalOverlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal() {
+        modalOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      // Eventos del modal
+      modalClose.addEventListener('click', closeModal);
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+      });
+
+      // ------------------------------------------------------------
+      //  RENDERIZADO DE LA LÍNEA DE TIEMPO
+      // ------------------------------------------------------------
+      function renderTimeline(data) {
+        const groups = [];
+        const items = [];
+        const localidades = new Set();
+        categoryMap.clear();
+        activeCategories.clear();
+
+        data.forEach((row, idx) => {
+          const year = (row.Año || '').trim();
+          const loc = (row.Localidad || '').trim();
+          const desc = (row.Descripción || '').trim();
+          const catRaw = (row.Categoría || '').trim();
+          const fuente = (row.Fuente || '').trim();
+          const pag = (row.Pag || '').trim();
+
+          if (!year || !loc) return;
+
+          // Grupo
+          if (!localidades.has(loc)) {
+            localidades.add(loc);
+            groups.push({ id: loc, content: loc });
+          }
+
+          // Categoría
+          const info = getCategoryInfo(catRaw);
+          const rawKey = catRaw || 'General';
+          if (!categoryMap.has(rawKey)) {
+            categoryMap.set(rawKey, info);
+            activeCategories.add(rawKey);
+          }
+
+          // Fechas
+          let start, end = null,
+            type = 'box';
+          if (year.includes('-')) {
+            const parts = year.split('-');
+            start = parts[0].trim() + '-01-01';
+            end = parts[1].trim() + '-12-31';
+            type = 'range';
+          } else {
+            start = year + '-01-01';
+            type = 'box';
+          }
+
+          const style = type === 'range' ?
+            `background-color: ${info.color}; border-color: ${info.color};` :
+            `border-color: ${info.color}; color: ${info.color};`;
+
+          const first = getFirstSentence(desc);
+          const titleText = `${first} (${info.label})`;
+
+          items.push({
+            id: idx,
+            group: loc,
+            start: start,
+            end: end,
+            type: type,
+            content: `<i class="fas ${info.icon}"></i>`,
+            style: style,
+            title: titleText, // tooltip nativo
+            custom: {
+              rawCategory: rawKey,
+              categoryLabel: info.label,
+              categoryColor: info.color,
+              categoryIcon: info.icon,
+              fullText: desc,
+              source: fuente,
+              page: pag,
+              firstSentence: first
             }
-            updateAllButtonState();
-            refreshView();
-        }
+          });
+        });
 
-        function updateAllButtonState() {
-            const total = categoryMap.size;
-            const active = activeCategories.size;
-            if (total === 0) {
-                btnAll.classList.add('active');
-                return;
+        allItems = items;
+
+        // DataSet y DataView
+        itemsDataSet = new vis.DataSet(items);
+        itemsView = new vis.DataView(itemsDataSet, {
+          filter: (item) => activeCategories.has(item.custom.rawCategory)
+        });
+
+        const groupsDataSet = new vis.DataSet(groups);
+
+        // Configuración de la línea de tiempo
+        const options = {
+          stack: true,
+          orientation: 'top',
+          zoomable: true,
+          moveable: true,
+          min: new Date(1770, 0, 1),
+          max: new Date(2027, 11, 31),
+          zoomMin: 1000 * 60 * 60 * 24 * 365, // 1 año
+          format: {
+            minorLabels: { year: 'YYYY' }
+          },
+          margin: { item: 12, axis: 16 },
+          tooltip: {
+            followMouse: true,
+            overflowMethod: 'flip'
+          }
+        };
+
+        timeline = new vis.Timeline(timelineEl, itemsView, groupsDataSet, options);
+
+        // Click → abrir modal
+        timeline.on('click', (props) => {
+          if (props.item) {
+            const item = itemsDataSet.get(props.item);
+            if (item && item.custom) {
+              openModal(item.custom);
             }
-            if (active === total) {
-                btnAll.classList.add('active');
-            } else {
-                btnAll.classList.remove('active');
-            }
-        }
+          }
+        });
 
-        function refreshView() {
-            if (itemsView) itemsView.refresh();
-        }
+        // Mostrar
+        timelineEl.style.display = 'block';
+        loaderEl.style.display = 'none';
 
-        // ---------- CARGA Y RENDER ----------
-        function renderTimeline(data) {
-            const groups = [];
-            const items = [];
-            const localidades = new Set();
-            categoryMap.clear();
+        // Construir botones de filtro
+        rebuildFilterButtons();
+
+        // Evento "Todas"
+        btnAll.addEventListener('click', function() {
+          const allActive = activeCategories.size === categoryMap.size;
+          const btns = filterGroup.querySelectorAll('.filter-btn:not(#btnAll)');
+          if (allActive) {
             activeCategories.clear();
-
-            data.forEach((row, idx) => {
-                const year = (row.Año || "").trim();
-                const loc = (row.Localidad || "").trim();
-                const desc = (row.Descripción || "").trim();
-                const catRaw = (row.Categoría || "").trim();
-                const fuente = (row.Fuente || "").trim();
-                const pag = (row.Pag || "").trim();
-
-                if (!year || !loc) return;
-
-                // Grupo
-                if (!localidades.has(loc)) {
-                    localidades.add(loc);
-                    groups.push({ id: loc, content: loc });
-                }
-
-                // Info categoría
-                const info = getCategoryInfo(catRaw);
-                const rawKey = catRaw || "General";
-                if (!categoryMap.has(rawKey)) {
-                    categoryMap.set(rawKey, info);
-                    activeCategories.add(rawKey);
-                }
-
-                // Fechas
-                let start, end = null, type = 'box';
-                if (year.includes('-')) {
-                    const parts = year.split('-');
-                    start = parts[0].trim() + '-01-01';
-                    end = parts[1].trim() + '-12-31';
-                    type = 'range';
-                } else {
-                    start = year + '-01-01';
-                    type = 'box';
-                }
-
-                const style = type === 'range'
-                    ? `background-color: ${info.color}; border-color: ${info.color};`
-                    : `border-color: ${info.color}; color: ${info.color};`;
-
-                // Texto para tooltip nativo (primera oración + categoría)
-                const first = getFirstSentence(desc);
-                const titleText = `${first} (${info.label})`;
-
-                items.push({
-                    id: idx,
-                    group: loc,
-                    start,
-                    end,
-                    type,
-                    content: `<i class="fas ${info.icon}"></i>`,
-                    style,
-                    title: titleText,  // tooltip nativo del navegador
-                    custom: {
-                        rawCategory: rawKey,
-                        categoryLabel: info.label,
-                        categoryColor: info.color,
-                        categoryIcon: info.icon,
-                        fullText: desc,
-                        source: fuente,
-                        page: pag,
-                        firstSentence: first
-                    }
-                });
-            });
-
-            // Guardar todos los items para referencia
-            allItems = items;
-
-            // DataSet y DataView
-            itemsDataSet = new vis.DataSet(items);
-            itemsView = new vis.DataView(itemsDataSet, {
-                filter: (item) => activeCategories.has(item.custom.rawCategory)
-            });
-
-            // Grupos
-            const groupsDataSet = new vis.DataSet(groups);
-
-            // Timeline
-            const container = document.getElementById('timeline');
-            const options = {
-                stack: true,
-                orientation: 'top',
-                zoomable: true,
-                moveable: true,
-                min: new Date(1770, 0, 1),
-                max: new Date(2027, 11, 31),
-                zoomMin: 1000 * 60 * 60 * 24 * 365, // 1 año mínimo
-                format: {
-                    minorLabels: { year: 'YYYY' }
-                },
-                margin: { item: 12, axis: 16 },
-                tooltip: {
-                    followMouse: true,
-                    overflowMethod: 'flip'
-                }
-            };
-
-            timeline = new vis.Timeline(container, itemsView, groupsDataSet, options);
-
-            // Evento click -> abrir modal
-            timeline.on('click', (props) => {
-                if (props.item) {
-                    const item = itemsDataSet.get(props.item);
-                    if (item && item.custom) {
-                        openModal(item.custom);
-                    }
-                }
-            });
-
-            // Mostrar timeline
-            timelineEl.style.display = 'block';
-            loaderEl.style.display = 'none';
-
-            // Construir botones de filtro
-            rebuildFilterButtons();
-
-            // Ajustar el botón "Todas"
-            btnAll.addEventListener('click', () => {
-                const allActive = activeCategories.size === categoryMap.size;
-                const btns = filterGroup.querySelectorAll('.filter-btn:not(#btnAll)');
-                if (allActive) {
-                    activeCategories.clear();
-                    btns.forEach(b => b.classList.remove('active'));
-                    btnAll.classList.remove('active');
-                } else {
-                    categoryMap.forEach((_, key) => activeCategories.add(key));
-                    btns.forEach(b => b.classList.add('active'));
-                    btnAll.classList.add('active');
-                }
-                refreshView();
-            });
-        }
-
-        // ---------- MODAL ----------
-        function openModal(custom) {
-            const icon = custom.categoryIcon || 'fa-bookmark';
-            const color = custom.categoryColor || '#64748b';
-            modalIcon.style.background = color;
-            modalIcon.innerHTML = `<i class="fas ${icon}"></i>`;
-            modalCategory.textContent = custom.categoryLabel || 'General';
-            modalFullText.textContent = custom.fullText || 'Sin descripción';
-            modalFuente.textContent = custom.source || 'S/D';
-            modalPag.textContent = custom.page || 'S/D';
-            modalOverlay.classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeModal() {
-            modalOverlay.classList.remove('open');
-            document.body.style.overflow = '';
-        }
-
-        // Eventos del modal
-        modalClose.addEventListener('click', closeModal);
-        modalOverlay.addEventListener('click', (e) => {
-            if (e.target === modalOverlay) closeModal();
+            btns.forEach(b => b.classList.remove('active'));
+            this.classList.remove('active');
+          } else {
+            categoryMap.forEach((_, key) => activeCategories.add(key));
+            btns.forEach(b => b.classList.add('active'));
+            this.classList.add('active');
+          }
+          refreshView();
         });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
-        });
+      }
 
-        // ---------- CARGA DEL CSV ----------
-        function loadCSV() {
-            fetch(CSV_URL)
-                .then(res => {
-                    if (!res.ok) throw new Error(`No se pudo cargar ${CSV_URL}`);
-                    return res.arrayBuffer();
-                })
-                .then(buffer => {
-                    const decoder = new TextDecoder('iso-8859-1');
-                    const csvText = decoder.decode(buffer);
-                    Papa.parse(csvText, {
-                        header: true,
-                        skipEmptyLines: true,
-                        complete: (result) => {
-                            if (result.data && result.data.length) {
-                                renderTimeline(result.data);
-                            } else {
-                                throw new Error('El CSV está vacío o mal formado');
-                            }
-                        },
-                        error: (err) => {
-                            throw err;
-                        }
-                    });
-                })
-                .catch(err => {
-                    loaderEl.innerHTML = `<span style="color:#b91c1c;font-weight:600;">⚠️ Error:</span> ${err.message}`;
-                });
-        }
+      // ------------------------------------------------------------
+      //  CARGA DEL CSV
+      // ------------------------------------------------------------
+      function loadCSV() {
+        fetch(CSV_URL)
+          .then(res => {
+            if (!res.ok) throw new Error(`No se pudo cargar ${CSV_URL}`);
+            return res.arrayBuffer();
+          })
+          .then(buffer => {
+            const decoder = new TextDecoder('iso-8859-1');
+            const csvText = decoder.decode(buffer);
+            Papa.parse(csvText, {
+              header: true,
+              skipEmptyLines: true,
+              complete: (result) => {
+                if (result.data && result.data.length) {
+                  renderTimeline(result.data);
+                } else {
+                  throw new Error('El CSV está vacío o mal formado');
+                }
+              },
+              error: (err) => {
+                throw err;
+              }
+            });
+          })
+          .catch(err => {
+            loaderEl.innerHTML = `<span style="color:#b91c1c;font-weight:600;">⚠️ Error:</span> ${err.message}`;
+          });
+      }
 
-        // Iniciar
-        loadCSV();
+      // Iniciar
+      loadCSV();
 
     })();
-</script>
+  </script>
 </body>
 </html>
